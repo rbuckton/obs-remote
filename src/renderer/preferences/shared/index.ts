@@ -1,0 +1,1 @@
+export { SharedPreferencesService } from "./sharedPreferences";
