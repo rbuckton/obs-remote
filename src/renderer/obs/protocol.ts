@@ -45,13 +45,13 @@ export interface SceneItem {
      */
     alignment: Alignment; // int
     /**
-     * The scaled height of the scene item.
-     */
-    cy: number; // double
-    /**
      * The scaled width of the scene item.
      */
     cx: number; // double
+    /**
+     * The scaled height of the scene item.
+     */
+    cy: number; // double
     /**
      * Whether or not this Scene Item is visible in the Scene.
      */
@@ -347,7 +347,8 @@ export type ImageFormat =
     | "pgm"
     | "ppm"
     | "xbm"
-    | "xpm";
+    | "xpm"
+    ;
 
 /**
  * The type of bounding box.

@@ -9,39 +9,69 @@ const styles = (theme: Theme) => createStyles({
         height: "128px",
         width: "128px",
         margin: "12px",
-        "&.MuiButton-textTwitch": {
-            color: theme.palette.twitch.main,
-            "&:hover": {
-                backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
-                "@media (hover: none)": {
-                    backgroundColor: "transparent"
-                }
-            }
-        },
-        "&.MuiButton-outlinedTwitch": {
-            color: theme.palette.twitch.main,
-            border: `1px solid ${fade(theme.palette.twitch.main, 0.5)}`,
-            "&:hover": {
-                border: `1px solid ${theme.palette.twitch.main}`,
-                backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
-                "@media (hover: none)": {
-                    backgroundColor: "transparent"
-                }
-            }
-        },
-        "&.MuiButton-containedTwitch": {
-            color: theme.palette.twitch.contrastText,
-            backgroundColor: theme.palette.twitch.main,
-            "&:hover": {
-                backgroundColor: theme.palette.twitch.dark,
-                "@media (hover: none)": {
-                    backgroundColor: theme.palette.twitch.main
-                }
-            }
-        },
+        // "&.MuiButton-textTwitch": {
+        //     color: theme.palette.twitch.main,
+        //     "&:hover": {
+        //         backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
+        //         "@media (hover: none)": {
+        //             backgroundColor: "transparent"
+        //         }
+        //     }
+        // },
+        // "&.MuiButton-outlinedTwitch": {
+        //     color: theme.palette.twitch.main,
+        //     border: `1px solid ${fade(theme.palette.twitch.main, 0.5)}`,
+        //     "&:hover": {
+        //         border: `1px solid ${theme.palette.twitch.main}`,
+        //         backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
+        //         "@media (hover: none)": {
+        //             backgroundColor: "transparent"
+        //         }
+        //     }
+        // },
+        // "&.MuiButton-containedTwitch": {
+        //     color: theme.palette.twitch.contrastText,
+        //     backgroundColor: theme.palette.twitch.main,
+        //     "&:hover": {
+        //         backgroundColor: theme.palette.twitch.dark,
+        //         "@media (hover: none)": {
+        //             backgroundColor: theme.palette.twitch.main
+        //         }
+        //     }
+        // },
         "& .MuiButton-label": {
             height: "100%"
         },
+    },
+    textTwitch: {
+        color: theme.palette.twitch.main,
+        "&:hover": {
+            backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
+            "@media (hover: none)": {
+                backgroundColor: "transparent"
+            }
+        }
+    },
+    outlinedTwitch: {
+        color: theme.palette.twitch.main,
+        border: `1px solid ${fade(theme.palette.twitch.main, 0.5)}`,
+        "&:hover": {
+            border: `1px solid ${theme.palette.twitch.main}`,
+            backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
+            "@media (hover: none)": {
+                backgroundColor: "transparent"
+            }
+        }
+    },
+    containedTwitch: {
+        color: theme.palette.twitch.contrastText,
+        backgroundColor: theme.palette.twitch.main,
+        "&:hover": {
+            backgroundColor: theme.palette.twitch.dark,
+            "@media (hover: none)": {
+                backgroundColor: theme.palette.twitch.main
+            }
+        }
     },
     container: {
         height: "100%",
@@ -103,16 +133,22 @@ export const TileButton = withStyles(styles, { name: "TileButton", withTheme: tr
     children,
 
     // from ButtonProps
+    variant = "contained",
     noWrap,
     color,
     className,
     ...props
 }: TileButtonProps & WithStyles<typeof styles, true>) => {
+    const twitch = color === "twitch";
+    if (color === "twitch") color = "default";
     // ui
     return <>
-        <Button variant="contained" color={color as ButtonProps["color"]} {...props} className={
+        <Button variant={variant} color={color} {...props} className={
             clsx([
                 classes.root,
+                {
+                    [classes[`${variant}Twitch` as keyof typeof classes]]: twitch
+                },
                 className
             ])}>
             <Grid container direction="column" className={classes.container} wrap="nowrap">

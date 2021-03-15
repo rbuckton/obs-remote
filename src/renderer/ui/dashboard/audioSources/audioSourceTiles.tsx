@@ -1,11 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { SourceType } from "../../../obs/protocol";
 import { AppContext } from "../../utils/context";
 import { AudioSourceTile } from "./audioSourceTile";
 import { AudioSource } from "./audioSource";
 import { useAsyncEffect } from "../../utils/useAsync";
-import { Breakpoint } from "@material-ui/core/styles/createBreakpoints";
-import { GridProps } from "@material-ui/core";
 
 export interface AudioSourceTilesProps {
 }

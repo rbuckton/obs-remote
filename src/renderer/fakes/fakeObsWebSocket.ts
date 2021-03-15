@@ -140,6 +140,7 @@ export function createDefaultFakeObsWebSocket() {
     let replayBufferState: boolean | "starting" | "stopping" = false;
     let currentProfile: string = "Untitled";
 
+    const sourceSettings = new Map<string, Record<string, unknown>>();
 
     let sceneCollections: SceneCollection[] = [];
     sceneCollections.push(createSceneCollection("Game 1", ({
@@ -151,20 +152,20 @@ export function createDefaultFakeObsWebSocket() {
         addSource("Desktop Audio", "wasapi_output_capture", "input");
         addSource("Mic/Aux", "wasapi_input_capture", "input");
         addSource("Background", "image_source", "input");
-        addSource("Game", "window_capture", "input");
+        addSource("Game Capture", "window_capture", "input");
 
         addScene("Intro", ({ addSceneItem }) => {
             addSceneItem("Desktop Audio");
             addSceneItem("Mic/Aux");
             addSceneItem("Background");
-            addSceneItem("Game");
+            addSceneItem("Game Capture");
         });
 
         addScene("Game", ({ addSceneItem }) => {
             addSceneItem("Desktop Audio");
             addSceneItem("Mic/Aux");
             addSceneItem("Background");
-            addSceneItem("Game");
+            addSceneItem("Game Capture");
         });
     }));
 
@@ -501,6 +502,29 @@ export function createDefaultFakeObsWebSocket() {
                     sourceName,
                     muted: mute
                 });
+            },
+
+            async GetSourceSettings({ sourceName, sourceType }) {
+                const source = currentSceneCollection.sources.find(s => s.name === sourceName && (sourceType === undefined || s.typeId === sourceType));
+                if (!source) throw new Error();
+                const settings = sourceSettings.get(source.name);
+                return {
+                    sourceName: source.name,
+                    sourceType: source.typeId,
+                    sourceSettings: deepClone(settings) || {}
+                };
+            },
+
+            async SetSourceSettings({ sourceName, sourceType, sourceSettings: newSettings }) {
+                const source = currentSceneCollection.sources.find(s => s.name === sourceName && (sourceType === undefined || s.typeId === sourceType));
+                if (!source) throw new Error();
+                const settings = { ...sourceSettings.get(source.name), ...deepClone(newSettings) };
+                sourceSettings.set(source.name, settings);
+                return {
+                    sourceName: source.name,
+                    sourceType: source.typeId,
+                    sourceSettings: deepClone(settings)
+                };
             },
 
             async GetSpecialSources() {
@@ -1048,6 +1072,7 @@ export function createDefaultFakeObsWebSocket() {
         }
 
         function addScene(name: string, callback: (builder: SceneBuilder) => void): Scene {
+            if (collection.sources.some(s => s.name === name)) throw new Error();
             if (collection.scenes.some(s => s.name === name)) throw new Error();
             const scene: Scene = {
                 name,
@@ -1057,6 +1082,7 @@ export function createDefaultFakeObsWebSocket() {
                 addSceneItem
             });
             collection.scenes.push(scene);
+            addSource(name, "scene", "scene");
             return scene;
 
             function addSceneItem(sourceName: string): SceneItem {

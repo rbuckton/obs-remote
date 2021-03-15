@@ -1,28 +1,27 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { Scene } from "obs-websocket-js";
-import { Avatar, Badge, Card, CardActionArea, CardActions, CardContent, CardHeader, CardMedia, createStyles, Grid, makeStyles, useTheme } from "@material-ui/core";
+import { Avatar, Badge, Card, CardActionArea, CardActions, CardHeader, CardMedia, CircularProgress, createStyles, Grid, makeStyles } from "@material-ui/core";
 import { Image as ImageIcon } from "@material-ui/icons";
-import { IObsWebSocket } from "../../../obs";
 import { useAsyncCallback, useAsyncEffect } from "../../utils/useAsync";
 import { CancelToken } from "@esfx/async-canceltoken";
-import { SceneItemAddedEventArgs, SceneItemRemovedEventArgs, SceneItemTransformChangedEventArgs, SceneItemVisibilityChangedEventArgs, SourceFilterAddedEventArgs, SourceFilterRemovedEventArgs, SourceFiltersReorderedEventArgs, SourceFilterVisibilityChangedEventArgs, SourceOrderChangedEventArgs } from "../../../obs/protocol";
+import { SceneItemAddedEventArgs, SceneItemRemovedEventArgs, SceneItemTransformChangedEventArgs, SceneItemVisibilityChangedEventArgs, SourceFilterAddedEventArgs, SourceFilterRemovedEventArgs, SourceFiltersReorderedEventArgs, SourceFilterVisibilityChangedEventArgs, SourceOrderChangedEventArgs, SourceRenamedEventArgs } from "../../../obs/protocol";
 import { AppContext, editModeHiddenKey } from "../../utils/context";
+import { EditModeBadge } from "../../components/editModeBadge";
+import { EditModeContainer } from "../../components/editModeContainer";
+import { EditModeContent } from "../../components/editModeContent";
 
-const useStyles = makeStyles(theme => createStyles({
+const useStyles = makeStyles(theme => ({
     root: {
-        // minWidth: "300px"
         minWidth: "128px",
         maxWidth: "512px"
     },
-    hidden: {
-        opacity: "50%"
-    },
     card: {
-        backgroundColor: "#e0e0e0"
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.getContrastText(theme.palette.background.paper),
     },
     cardCurrent: {
-        backgroundColor: theme.palette.info.main
+        backgroundColor: theme.palette.info.main,
     },
     avatar: {
         backgroundColor: theme.palette.action.selected
@@ -52,10 +51,17 @@ export const SceneTile = ({
     // state
     const classes = useStyles();
     const { obs, editMode } = useContext(AppContext);
+    const [sceneName, setSceneName] = useState(() => scene.name);
     const [thumbnail, setThumbnail] = useState<string>();
     const [hidden, setHidden] = useState<boolean>();
     const [pending, setPending] = useState(false);
     const updatingThumbnailRef = useRef(false);
+    const sources = useMemo(() => scene.sources.reduce((m, s) => {
+        let set = m.get(s.name);
+        if (!set) m.set(s.name, set = new Map());
+        set.set(s.id, s.render);
+        return m;
+    }, new Map<string, Map<number, boolean>>()), [scene]);
 
     // behavior
     const onClick = useAsyncCallback(async () => {
@@ -76,14 +82,97 @@ export const SceneTile = ({
         }
     });
 
-    const onSceneChanged = async (args: SceneItemAddedEventArgs | SceneItemRemovedEventArgs | SceneItemTransformChangedEventArgs | SceneItemVisibilityChangedEventArgs | SourceOrderChangedEventArgs) => {
-        if (args["scene-name"] !== scene.name) return;
+    const onSceneItemAdded = async ({ "scene-name": scene, "item-id": id, "item-name": name }: SceneItemAddedEventArgs) => {
+        if (scene !== sceneName) return;
+        trackSceneItem(id, name);
+        if (isSceneItemVisible(id, name)) {
+            await updateThumbnail();
+        }
+    };
+
+    const onSceneItemRemoved = async ({ "scene-name": scene, "item-id": id, "item-name": name }: SceneItemRemovedEventArgs) => {
+        if (scene !== sceneName) return;
+        untrackSceneItem(id, name);
         await updateThumbnail();
     };
 
-    const onSourceChanged = async (args: SourceFilterAddedEventArgs | SourceFilterRemovedEventArgs | SourceFilterVisibilityChangedEventArgs | SourceFiltersReorderedEventArgs) => {
-        if (!scene.sources.some(source => source.name === args.sourceName)) return;
+    const onSceneItemVisibilityChanged = async ({ "scene-name": scene, "item-id": id, "item-name": name, "item-visible": visible }: SceneItemVisibilityChangedEventArgs) => {
+        if (scene !== sceneName) return;
+        trackSceneItem(id, name, visible);
         await updateThumbnail();
+    };
+
+    const onSceneItemTransformChanged = async ({ "scene-name": scene, "item-id": id, "item-name": name, transform }: SceneItemTransformChangedEventArgs) => {
+        if (scene !== sceneName) return;
+        trackSceneItem(id, name, transform.visible);
+        await updateThumbnail();
+    };
+
+    const onSourceOrderChanged = async ({ "scene-name": scene, "scene-items": items }: SourceOrderChangedEventArgs) => {
+        if (scene !== sceneName) return;
+        const existingSourceItems = new Map([...sources].map(([name, items]) => [name, new Set(items.keys())]));
+        for (const { "item-id": id, "source-name": name } of items) {
+            trackSceneItem(id, name);
+            const items = existingSourceItems.get(name);
+            if (items?.delete(id) && items.size === 0) {
+                existingSourceItems.delete(name);
+            }
+        }
+        for (const [name, items] of existingSourceItems) {
+            for (const id of items) {
+                untrackSceneItem(id, name);
+            }
+        }
+        await updateThumbnail();
+    };
+
+    const onSourceChanged = async ({ sourceName }: SourceFilterAddedEventArgs | SourceFilterRemovedEventArgs | SourceFilterVisibilityChangedEventArgs | SourceFiltersReorderedEventArgs) => {
+        const items = sources.get(sourceName);
+        let isVisible = false;
+        if (items) {
+            for (const visible of items.values()) {
+                if (visible) {
+                    isVisible = true;
+                    break;
+                }
+            }
+        }
+        if (isVisible) {
+            await updateThumbnail();
+        }
+    };
+
+    const onSourceRenamed = ({ previousName, newName, sourceType }: SourceRenamedEventArgs) => {
+        if (sourceType === "scene" && previousName === sceneName) {
+            setSceneName(newName);
+            return;
+        }
+
+        const items = sources.get(previousName);
+        if (items) {
+            sources.delete(previousName);
+            sources.set(newName, items);
+        }
+    };
+
+    const trackSceneItem = (id: number, name: string, visible?: boolean) => {
+        let items = sources.get(name);
+        if (!items) sources.set(name, items = new Map<number, boolean>());
+        const isVisible = items.get(id);
+        if (visible === undefined || visible !== isVisible) {
+            items.set(id, visible ?? isVisible ?? true);
+        }
+    };
+
+    const untrackSceneItem = (id: number, name: string) => {
+        const items = sources.get(name);
+        if (items?.delete(id)) {
+            sources.delete(name);
+        }
+    };
+
+    const isSceneItemVisible = (id: number, name: string) => {
+        return sources.get(name)?.get(id) ?? false;
     };
 
     const updateThumbnail = async (token?: CancelToken) => {
@@ -93,7 +182,6 @@ export const SceneTile = ({
             const { img } = await obs.send("TakeSourceScreenshot", {
                 sourceName: scene.name,
                 embedPictureFormat: "jpeg",
-                // compressionQuality: 100,
                 width: 320
             });
             if (token?.signaled) return;
@@ -106,43 +194,36 @@ export const SceneTile = ({
 
     // effects
     useEffect(() => {
-        if (current) {
-            const source = CancelToken.source();
-            const timer = setInterval(useAsyncCallback(updateThumbnail), 100, source.token) as unknown as NodeJS.Timeout;
-            return () => {
-                clearInterval(timer);
-                source.cancel();
-            };
-        }
-    }, [obs, scene, current]);
-
-    useEffect(() => {
-        obs.on("SceneItemAdded", onSceneChanged);
-        obs.on("SceneItemRemoved", onSceneChanged);
-        obs.on("SceneItemTransformChanged", onSceneChanged);
-        obs.on("SceneItemVisibilityChanged", onSceneChanged);
-        obs.on("SourceOrderChanged", onSceneChanged);
+        // listen for changes that would effect re-rendering the thumbnail
+        obs.on("SceneItemAdded", onSceneItemAdded);
+        obs.on("SceneItemRemoved", onSceneItemRemoved);
+        obs.on("SceneItemTransformChanged", onSceneItemTransformChanged);
+        obs.on("SceneItemVisibilityChanged", onSceneItemVisibilityChanged);
+        obs.on("SourceOrderChanged", onSourceOrderChanged);
         obs.on("SourceFilterAdded", onSourceChanged);
         obs.on("SourceFilterRemoved", onSourceChanged);
         obs.on("SourceFilterVisibilityChanged", onSourceChanged);
         obs.on("SourceFiltersReordered", onSourceChanged);
+        obs.on("SourceRenamed", onSourceRenamed);
         return () => {
-            obs.off("SceneItemAdded", onSceneChanged);
-            obs.off("SceneItemRemoved", onSceneChanged);
-            obs.off("SceneItemTransformChanged", onSceneChanged);
-            obs.off("SceneItemVisibilityChanged", onSceneChanged);
-            obs.off("SourceOrderChanged", onSceneChanged);
+            obs.off("SceneItemAdded", onSceneItemAdded);
+            obs.off("SceneItemRemoved", onSceneItemRemoved);
+            obs.off("SceneItemTransformChanged", onSceneItemTransformChanged);
+            obs.off("SceneItemVisibilityChanged", onSceneItemVisibilityChanged);
+            obs.off("SourceOrderChanged", onSourceOrderChanged);
             obs.off("SourceFilterAdded", onSourceChanged);
             obs.off("SourceFilterRemoved", onSourceChanged);
             obs.off("SourceFilterVisibilityChanged", onSourceChanged);
             obs.off("SourceFiltersReordered", onSourceChanged);
+            obs.off("SourceRenamed", onSourceRenamed);
         };
     }, [obs, scene]);
 
     useAsyncEffect(async (token) => {
-        await updateThumbnail(token);
-
+        // update whether the source is hidden
         const settings = await obs.send("GetSourceSettings", { sourceName: scene.name });
+        if (token.signaled) return;
+
         if (settings.sourceSettings[editModeHiddenKey]) {
             setHidden(true);
         }
@@ -151,35 +232,50 @@ export const SceneTile = ({
         }
     }, [obs, scene]);
 
+    useAsyncEffect(async (token) => {
+        // update the thumbnail if the scene becomes visible.
+        if (hidden === false || editMode) {
+            await updateThumbnail(token);
+        }
+    }, [obs, scene, hidden === false, editMode]);
+
+    useEffect(() => {
+        // while the scene is current, refresh the thumbnail every 1/10th of a second
+        if (current) {
+            const source = CancelToken.source();
+            const timer = setInterval(useAsyncCallback(updateThumbnail), 100, source.token) as unknown as NodeJS.Timeout;
+            return () => {
+                clearInterval(timer);
+                source.cancel();
+            };
+        }
+    }, [obs, current]);
+
     // ui
-    return <>
-        {(hidden === false || editMode) &&
-            <Grid
-                item
-                xs={3}
-                className={clsx([
-                    classes.root,
-                    hidden ? classes.hidden : undefined
-                ])}>
-                <Card
-                    className={current ? classes.cardCurrent : classes.card}
-                    elevation={current ? 3 : 1}>
-                    <CardActionArea onClick={onClick}>
-                        <CardHeader
-                            className={classes.header}
-                            avatar={
-                                <Badge badgeContent={editMode ? hidden ? "hidden" : "visible" : undefined} color="secondary">
-                                    <Avatar className={current ? classes.avatarCurrent : classes.avatar}>
-                                        <ImageIcon/>
-                                    </Avatar>
-                                </Badge>
-                            }
-                            title={scene.name}
-                        />
-                        {thumbnail && <CardMedia image={thumbnail} style={{ height: 0, paddingTop: "56.25%" }} />}
-                    </CardActionArea>
-                    <CardActions></CardActions>
-                </Card>
-            </Grid>}
-    </>;
+    return <>{
+        (hidden !== undefined) &&
+            <EditModeContainer hidden={hidden}>
+                <EditModeContent component={Grid} item xs={3} className={classes.root}>
+                    <Card
+                        className={current ? classes.cardCurrent : classes.card}
+                        elevation={current ? 3 : 1}>
+                        <CardActionArea onClick={onClick}>
+                            <CardHeader
+                                className={classes.header}
+                                avatar={
+                                    <EditModeBadge>
+                                        <Avatar className={current ? classes.avatarCurrent : classes.avatar}>
+                                            <ImageIcon/>
+                                        </Avatar>
+                                    </EditModeBadge>
+                                }
+                                title={scene.name}
+                            />
+                            {thumbnail && <CardMedia image={thumbnail} style={{ height: 0, paddingTop: "56.25%" }} />}
+                        </CardActionArea>
+                        <CardActions></CardActions>
+                    </Card>
+                </EditModeContent>
+            </EditModeContainer>
+    }</>;
 };

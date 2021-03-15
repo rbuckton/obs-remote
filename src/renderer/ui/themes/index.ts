@@ -1,3 +1,4 @@
+import { Theme } from "@material-ui/core";
 import { DarkTheme } from "./dark";
 import { LightTheme } from "./light";
 
@@ -9,6 +10,10 @@ export const enum ThemeKind {
     Dark = 1
 }
 
-export function getTheme(kind: ThemeKind) {
-    return [LightTheme, DarkTheme][kind];
+const themes = [LightTheme, DarkTheme] as [Theme, Theme] & { light: Theme, dark: Theme };
+themes.light = LightTheme;
+themes.dark = DarkTheme;
+
+export function getTheme(kind: ThemeKind | "light" | "dark") {
+    return themes[kind];
 }

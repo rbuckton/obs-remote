@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import { CircularProgress } from "@material-ui/core";
 import {
     FiberSmartRecord as RecordIcon,
     Stop as StopRecordIcon,
@@ -6,7 +7,6 @@ import {
 } from "@material-ui/icons";
 import { StreamStatusEventArgs } from "../../../obs/protocol";
 import { TileButton } from "../../components/tileButton";
-import { CircularProgress } from "@material-ui/core";
 import { AppContext } from "../../utils/context";
 import { useAsyncCallback, useAsyncEffect } from "../../utils/useAsync";
 
@@ -117,7 +117,7 @@ export const ReplayTiles = ({ }: ReplayTilesProps) => {
                 started ? onRequestStopReplayBuffer :
                 undefined
             }>
-            {started || stopping ? <>Stop Replay Buffer</> : <>Start Replay Buffer</>}
+            {started || stopping ? "Stop Replay Buffer" : "Start Replay Buffer"}
         </TileButton>
         <TileButton
             icon={saving ? <CircularProgress size={24} /> : <SaveIcon />}

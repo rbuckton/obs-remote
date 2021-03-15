@@ -12,15 +12,10 @@ import { TileButton } from "../../components/tileButton";
 import { AppContext, editModeHiddenKey } from "../../utils/context";
 import { AudioSource } from "./audioSource";
 import { useAsyncCallback, useAsyncEffect } from "../../utils/useAsync";
-import { Badge, CircularProgress, createStyles, makeStyles } from "@material-ui/core";
-
-const useStyles = makeStyles(theme => createStyles({
-    button: {
-    },
-    buttonHidden: {
-        opacity: "50%"
-    }
-}));
+import { CircularProgress, createStyles, makeStyles } from "@material-ui/core";
+import { EditModeContainer } from "../../components/editModeContainer";
+import { EditModeBadge } from "../../components/editModeBadge";
+import { EditModeContent } from "../../components/editModeContent";
 
 export interface AudioSourceTileProps {
     source: AudioSource;
@@ -30,10 +25,9 @@ export const AudioSourceTile = ({
     source,
 }: AudioSourceTileProps) => {
     // state
-    const classes = useStyles();
     const { obs, editMode } = useContext(AppContext);
-    const [isMuted, setIsMuted] = useState(false);
-    const [volume, setVolume] = useState(0);
+    const [isMuted, setIsMuted] = useState<boolean>();
+    const [volume, setVolume] = useState<number>();
     const [hidden, setHidden] = useState<boolean>();
     const [pending, setPending] = useState(false);
 
@@ -85,25 +79,22 @@ export const AudioSourceTile = ({
     }, [obs, source]);
 
     // ui
-    return <>
-        {(hidden === false || editMode) && <TileButton
-            icon={
-                <Badge
-                    badgeContent={editMode ? hidden ? "hidden" : "visible" : undefined}
-                    style={{textTransform: "lowercase"}}
-                    color="secondary"
-                >{
-                    pending ? <CircularProgress size={24} /> :
-                    source.sourceType.typeId === "wasapi_input_capture" ?
-                        isMuted ? <MicOffIcon /> : volume === 0 ? <MicSilentIcon /> : <MicIcon /> :
-                        isMuted ? <AudioOffIcon /> : volume === 0 ? <AudioSilentIcon /> : <AudioIcon />
-                }</Badge>
-            } 
-            color={isMuted && !hidden ? "secondary" : "default"}
-            onClick={onClick}
-            className={hidden ? classes.buttonHidden : classes.button}
-            title={source.name}>
-            {source.name}
-        </TileButton>}
+    return hidden === undefined ? <></> : <>
+        <EditModeContainer hidden={hidden}>
+            <EditModeContent component={TileButton}
+                icon={
+                    <EditModeBadge>{
+                        pending ? <CircularProgress size={24} /> :
+                        source.sourceType.typeId === "wasapi_input_capture" ?
+                            isMuted ? <MicOffIcon /> : volume === 0 ? <MicSilentIcon /> : <MicIcon /> :
+                            isMuted ? <AudioOffIcon /> : volume === 0 ? <AudioSilentIcon /> : <AudioIcon />
+                    }</EditModeBadge>
+                } 
+                color={isMuted && !hidden ? "secondary" : "default"}
+                onClick={onClick}
+                title={source.name}>
+                {source.name}
+            </EditModeContent>
+        </EditModeContainer>
     </>;
 };

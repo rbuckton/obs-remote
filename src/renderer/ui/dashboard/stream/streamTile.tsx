@@ -11,8 +11,6 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    ThemeProvider,
-    useTheme
 } from "@material-ui/core";
 import {
     ScreenShare as StreamIcon,
@@ -21,8 +19,7 @@ import {
 import { TileButton } from "../../components/tileButton";
 import { AppContext } from "../../utils/context";
 import { useAsyncCallback, useAsyncEffect } from "../../utils/useAsync";
-import { TwitchIcon } from "../../icons/TwitchIcon";
-import { TwitchTheme } from "../../themes/twitch";
+import { TwitchGlitchIcon } from "../../icons/TwitchGlitchIcon";
 
 const enum StreamState {
     Unknown,
@@ -93,37 +90,37 @@ export const StreamTile = ({ }: StreamTileProps) => {
     return <>
         <Dialog
             open={state === StreamState.StartRequested}
-            aria-labelledby="dialog-golive-title"
-            aria-describedby="dialog-golive-description">
-            <DialogTitle id="dialog-golive-title">Go Live</DialogTitle>
+            aria-labelledby="golive-dialog-title"
+            aria-describedby="golive-dialog-description">
+            <DialogTitle id="golive-dialog-title">Go Live</DialogTitle>
             <DialogContent>
-                <DialogContentText id="dialog-golive-description">
+                <DialogContentText id="golive-dialog-description">
                     This will start broadcasting your stream. Are you sure?
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onConfirmStartStream} variant="contained" color="primary" autoFocus>Yes</Button>
-                <Button onClick={onCancelStartStream} variant="contained" color="secondary">No</Button>
+                <Button onClick={onConfirmStartStream} variant="contained" color="primary" autoFocus aria-label="yes">Yes</Button>
+                <Button onClick={onCancelStartStream} variant="contained" color="secondary" aria-label="no">No</Button>
             </DialogActions>
         </Dialog>
         <Dialog
             open={state === StreamState.StopRequested}
-            aria-labelledby="dialog-endstream-title"
-            aria-describedby="dialog-endstream-description">
-            <DialogTitle id="dialog-endstream-title">End Stream</DialogTitle>
+            aria-labelledby="endstream-dialog-title"
+            aria-describedby="endstream-dialog-description">
+            <DialogTitle id="endstream-dialog-title">End Stream</DialogTitle>
             <DialogContent>
-                <DialogContentText id="dialog-endstream-description">
+                <DialogContentText id="endstream-dialog-description">
                     This will stop broadcasting your stream. Are you sure?
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onConfirmStopStream} variant="contained" color="primary" autoFocus>Yes</Button>
-                <Button onClick={onCancelStopStream} variant="contained" color="secondary">No</Button>
+                <Button onClick={onConfirmStopStream} variant="contained" color="primary" autoFocus aria-label="yes">Yes</Button>
+                <Button onClick={onCancelStopStream} variant="contained" color="secondary" aria-label="no">No</Button>
             </DialogActions>
         </Dialog>
         <TileButton
             icon={
-                stopped ? isTwitch ? <TwitchIcon htmlColor="white" /> : <StreamIcon /> :
+                stopped ? isTwitch ? <TwitchGlitchIcon htmlColor="white" /> : <StreamIcon /> :
                 started ? <StopStreamIcon /> :
                 <CircularProgress size={24} />
             }
@@ -137,9 +134,8 @@ export const StreamTile = ({ }: StreamTileProps) => {
                 stopped ? onRequestStartStream :
                 started ? onRequestStopStream :
                 undefined
-            }
-        >
-            {started || stopping ? <>End Stream</> : <>Go Live</>}
+            }>
+            {started || stopping ? "End Stream" : "Go Live"}
         </TileButton>
     </>;
 };

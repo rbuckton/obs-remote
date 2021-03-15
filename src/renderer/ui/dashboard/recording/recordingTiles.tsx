@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Button, CircularProgress, createStyles, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, makeStyles, Paper } from "@material-ui/core";
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import {
     FiberManualRecord as RecordIcon,
     Stop as StopRecordIcon,
@@ -111,32 +111,32 @@ export const RecordingTiles = ({ }: RecordingTilesProps) => {
     return <>
         <Dialog
             open={state === RecordingState.StartRequested}
-            aria-labelledby="dialog-startrecording-title"
-            aria-describedby="dialog-startrecording-description">
-            <DialogTitle id="dialog-startrecording-title">Start Recording</DialogTitle>
+            aria-labelledby="startrecording-dialog-title"
+            aria-describedby="startrecording-dialog-description">
+            <DialogTitle id="startrecording-dialog-title">Start Recording</DialogTitle>
             <DialogContent>
-                <DialogContentText id="dialog-startrecording-description">
+                <DialogContentText id="startrecording-dialog-description">
                     This will start recording. Are you sure?
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onConfirmStartRecording} variant="contained" color="primary" autoFocus>Yes</Button>
-                <Button onClick={onCancelStartRecording} variant="contained" color="secondary">No</Button>
+                <Button onClick={onConfirmStartRecording} variant="contained" color="primary" autoFocus aria-label="yes">Yes</Button>
+                <Button onClick={onCancelStartRecording} variant="contained" color="secondary" aria-label="no">No</Button>
             </DialogActions>
         </Dialog>
         <Dialog
             open={state === RecordingState.StopRequested}
-            aria-labelledby="dialog-stoprecording-title"
-            aria-describedby="dialog-stoprecording-description">
-            <DialogTitle id="dialog-stoprecording-title">Stop Recording</DialogTitle>
+            aria-labelledby="stoprecording-dialog-title"
+            aria-describedby="stoprecording-dialog-description">
+            <DialogTitle id="stoprecording-dialog-title">Stop Recording</DialogTitle>
             <DialogContent>
-                <DialogContentText id="dialog-stoprecording-description">
+                <DialogContentText id="stoprecording-dialog-description">
                     This will stop recording. Are you sure?
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onConfirmStopRecording} variant="contained" color="primary" autoFocus>Yes</Button>
-                <Button onClick={onCancelStopRecording} variant="contained" color="secondary">No</Button>
+                <Button onClick={onConfirmStopRecording} variant="contained" color="primary" autoFocus aria-label="yes">Yes</Button>
+                <Button onClick={onCancelStopRecording} variant="contained" color="secondary" aria-label="no">No</Button>
             </DialogActions>
         </Dialog>
         <TileButton
@@ -152,14 +152,14 @@ export const RecordingTiles = ({ }: RecordingTilesProps) => {
                 started ? onRequestStopRecording :
                 undefined
             }>
-            {started || stopping || paused ? <>End Rec</> : <>Rec</>}
+            {started || stopping || paused ? "End Rec" : "Rec"}
         </TileButton>
         <TileButton
             icon={<PauseIcon />}
             color={paused ? "primary" : "default"}
             disabled={!started && !paused}
             onClick={started || paused ? onPauseClick : undefined}>
-            {paused ? <>Resume</> : <>Pause</>}
+            {paused ? "Resume" : "Pause"}
         </TileButton>
     </>;
 };
