@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = [
     {
         mode: 'development',
-        entry: './src/main/main.ts',
+        entry: './src/main.ts',
         target: 'electron-main',
         devtool: 'source-map',
         resolve: {
@@ -17,16 +17,16 @@ module.exports = [
         },
         externals: {
             "semver": "commonjs semver",
-            "electron": "commonjs electron"
+            "electron": "commonjs electron",
         },
         output: {
-            path: __dirname + "/dist/main",
+            path: __dirname + "/dist",
             filename: "main.js"
         }
     },
     {
         mode: 'development',
-        entry: './src/renderer/app.tsx',
+        entry: './src/renderer.tsx',
         target: 'electron-renderer',
         devtool: 'source-map',
         resolve: {
@@ -57,11 +57,11 @@ module.exports = [
         },
         externals: {
             "semver": "commonjs semver",
-            "electron": "commonjs electron"
+            "electron": "commonjs electron",
         },
         output: {
-            path: __dirname + "/dist/renderer",
-            filename: "app.js"
+            path: __dirname + "/dist",
+            filename: "renderer.js"
         }
     }
 ];
