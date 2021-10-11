@@ -127,6 +127,10 @@ npm run start
 
 For more information about how `obs-remote` is structured, see [src/README.md](src/README.md).
 
+# Sponsors
+
+If you would like your name or logo listed here, you can sponsor this work via [GitHub Sponsors](https://github.com/sponsors/rbuckton).
+
 # License
 
 `obs-remote` is published under the [MIT License](LICENSE).
