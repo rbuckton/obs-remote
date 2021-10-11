@@ -8,11 +8,11 @@ const path = require("path");
  */
 function parseTag(arg) {
     switch (arg?.toLowerCase()) {
-        case "nightly": return "nightly";
+        case "pre": return "pre";
         case "beta": return "beta";
         case "none": return "";
         case undefined: throw new Error("Expected a value for parameter '--tag'");
-        default: throw new Error(`Invalid value for '--tag'. Expected: 'none', 'nightly', or 'beta'. Received: '${arg}'.`);
+        default: throw new Error(`Invalid value for '--tag'. Expected: 'none', 'pre', or 'beta'. Received: '${arg}'.`);
     }
 }
 
@@ -31,7 +31,7 @@ function parseTimestampKind(arg) {
 
 function printHelp() {
     console.log("Usage:");
-    console.log(`node ${path.resolve(process.cwd(), __filename)} [[--tag] <nightly | beta>] [[--timestamp-kind] <none | date | datetime>]`);
+    console.log(`node ${path.resolve(process.cwd(), __filename)} [[--tag] <pre | beta>] [[--timestamp-kind] <none | date | datetime>]`);
 }
 
 /**
@@ -39,7 +39,7 @@ function printHelp() {
  */
 function parseArgs(argv) {
     try {
-        /** @type {undefined | "" | "nightly" | "beta"} */
+        /** @type {undefined | "" | "pre" | "beta"} */
         let tag;
         /** @type {undefined | "none" | "date" | "datetime"} */
         let timestampKind;
