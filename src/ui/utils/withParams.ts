@@ -1,14 +1,19 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import React from "react";
 import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
-import { PropInjector, ConsistentWith } from "@material-ui/types";
-import { getDisplayName } from "@material-ui/utils";
+import { PropInjector, ConsistentWith } from "@mui/types";
+import { getDisplayName } from "@mui/utils";
 
 export interface WithParams<Params extends { [K in keyof Params]?: string } = {}> {
     params: Partial<Params>;
 }
 
-export interface WithParamsProps<Params extends { [K in keyof Params]?: string } = {}> {
+export interface ParamsProps<Params extends { [K in keyof Params]?: string } = {}> {
     params?: Partial<Params>;
 }
 
@@ -30,5 +35,5 @@ export function withParams<
             WithParams.displayName = `WithParams(${getDisplayName(Component)})`;
         }
         return WithParams;
-    } as PropInjector<WithParams<Params>, WithParamsProps<Params>>;
+    } as PropInjector<WithParams<Params>, ParamsProps<Params>>;
 }

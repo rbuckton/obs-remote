@@ -1,6 +1,12 @@
-import { ButtonClassKey, createMuiTheme, fade } from "@material-ui/core";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
 
-declare module "@material-ui/core/styles/createPalette" {
+import { createTheme, Theme } from "@mui/material";
+import "@mui/styles";
+
+declare module "@mui/material/styles" {
     interface Palette {
         twitch: Palette['primary']
     }
@@ -9,19 +15,26 @@ declare module "@material-ui/core/styles/createPalette" {
     }
 }
 
-export const LightTheme = createMuiTheme({
+declare module "@mui/material" {
+    interface ButtonPropsColorOverrides {
+        twitch: true;
+    }
+}
+
+declare module '@mui/styles' {
+    interface DefaultTheme extends Theme { }
+}
+
+export const LightTheme = createTheme({
     palette: {
-        type: "light",
+        mode: "light",
         twitch: {
             main: "#9146ff",
             contrastText: "#fff"
+        },
+        background: {
+            default: "#fff",
+            paper: "#eee"
         }
     },
-    overrides: {
-        MuiButton: {
-            ["textTwitch" as ButtonClassKey]: { },
-            ["outlinedTwitch" as ButtonClassKey]: { },
-            ["containedTwitch" as ButtonClassKey]: { }
-        }
-    }
 });

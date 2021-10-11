@@ -1,3 +1,8 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
@@ -33,6 +38,9 @@ export interface IMainDevToolsService {
 export class MainDevToolsService implements IMainDevToolsService {
     _sessions = new WeakMap<Session, Promise<void>>();
 
+    /**
+     * Installs the React developer tools into the provided session.
+     */
     async install(session: Session): Promise<void> {
         let promise = this._sessions.get(session);
         if (!promise) this._sessions.set(session, promise = this._installDevtoolsExtensions(session));

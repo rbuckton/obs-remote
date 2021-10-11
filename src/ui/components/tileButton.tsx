@@ -1,69 +1,56 @@
-import React, { Children } from "react";
-import clsx from "clsx";
-import { Button, ButtonProps, ExtendButtonBaseTypeMap, fade, Grid, PropTypes, Theme, Typography } from "@material-ui/core";
-import { OverrideProps } from "@material-ui/core/OverridableComponent";
-import { ClassKeyOfStyles, createStyles, WithStyles, withStyles } from "@material-ui/styles";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
 
-const styles = (theme: Theme) => createStyles({
-    root: {
+import { alpha, Button, ButtonProps, ExtendButtonBaseTypeMap, Grid, Typography } from "@mui/material";
+import { OverrideProps } from "@mui/types";
+import { styled, SxProps, Theme } from "@mui/system";
+import clsx from "clsx";
+import { Children, ElementType, ForwardedRef, forwardRef, ReactNode } from "react";
+import { generateUtilityClasses } from "../utils/mui";
+import { OverridableFunctionComponent } from "../../core/renderer/types";
+
+const classes = generateUtilityClasses("TileButton", [
+    "root",
+    "textTwitch",
+    "outlinedTwitch",
+    "containedTwitch",
+    "container",
+    "icon",
+    "caption",
+    "captionText",
+]);
+
+const RootButton = styled(Button)(({ theme }) => ({
+    [`&.${classes.root}`]: {
         height: "128px",
         width: "128px",
-        margin: "12px",
-        // "&.MuiButton-textTwitch": {
-        //     color: theme.palette.twitch.main,
-        //     "&:hover": {
-        //         backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
-        //         "@media (hover: none)": {
-        //             backgroundColor: "transparent"
-        //         }
-        //     }
-        // },
-        // "&.MuiButton-outlinedTwitch": {
-        //     color: theme.palette.twitch.main,
-        //     border: `1px solid ${fade(theme.palette.twitch.main, 0.5)}`,
-        //     "&:hover": {
-        //         border: `1px solid ${theme.palette.twitch.main}`,
-        //         backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
-        //         "@media (hover: none)": {
-        //             backgroundColor: "transparent"
-        //         }
-        //     }
-        // },
-        // "&.MuiButton-containedTwitch": {
-        //     color: theme.palette.twitch.contrastText,
-        //     backgroundColor: theme.palette.twitch.main,
-        //     "&:hover": {
-        //         backgroundColor: theme.palette.twitch.dark,
-        //         "@media (hover: none)": {
-        //             backgroundColor: theme.palette.twitch.main
-        //         }
-        //     }
-        // },
         "& .MuiButton-label": {
             height: "100%"
         },
     },
-    textTwitch: {
+    [`& .${classes.textTwitch}`]: {
         color: theme.palette.twitch.main,
         "&:hover": {
-            backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
+            backgroundColor: alpha(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
             "@media (hover: none)": {
                 backgroundColor: "transparent"
             }
         }
     },
-    outlinedTwitch: {
+    [`& .${classes.outlinedTwitch}`]: {
         color: theme.palette.twitch.main,
-        border: `1px solid ${fade(theme.palette.twitch.main, 0.5)}`,
+        border: `1px solid ${alpha(theme.palette.twitch.main, 0.5)}`,
         "&:hover": {
             border: `1px solid ${theme.palette.twitch.main}`,
-            backgroundColor: fade(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
+            backgroundColor: alpha(theme.palette.twitch.main, theme.palette.action.hoverOpacity),
             "@media (hover: none)": {
                 backgroundColor: "transparent"
             }
         }
     },
-    containedTwitch: {
+    [`& .${classes.containedTwitch}`]: {
         color: theme.palette.twitch.contrastText,
         backgroundColor: theme.palette.twitch.main,
         "&:hover": {
@@ -73,15 +60,15 @@ const styles = (theme: Theme) => createStyles({
             }
         }
     },
-    container: {
+    [`& .${classes.container}`]: {
         height: "100%",
     },
-    icon: {
+    [`& .${classes.icon}`]: {
         padding: theme.spacing(1, 0, 0),
         justifyContent: "center",
         alignItems: "center"
     },
-    caption: {
+    [`& .${classes.caption}`]: {
         padding: theme.spacing(1, 0, 0),
         flexGrow: 1,
         minHeight: "68px",
@@ -89,23 +76,21 @@ const styles = (theme: Theme) => createStyles({
         justifyContent: "center",
         alignItems: "center",
     },
-    captionText: {
+    [`& .${classes.captionText}`]: {
         maxHeight: "100%",
         overflow: "hidden",
         textOverflow: "ellipsis"
-    }
-});
-
-export type TileButtonClassKey = ClassKeyOfStyles<typeof styles>;
+    },
+}))
 
 export type TileButtonTypeMap<
     P = {},
-    D extends React.ElementType = 'button'
+    D extends ElementType = 'button'
 > = ExtendButtonBaseTypeMap<{
     props: P & {
-        icon?: React.ReactNode;
-        children?: React.ReactNode;
-        color?: PropTypes.Color | "twitch";
+        icon?: ReactNode;
+        children?: ReactNode;
+        color?: ButtonProps["color"];
         disabled?: boolean;
         disableElevation?: boolean;
         disableFocusRipple?: boolean;
@@ -113,21 +98,17 @@ export type TileButtonTypeMap<
         size?: 'small' | 'medium' | 'large';
         variant?: 'text' | 'outlined' | 'contained';
         noWrap?: boolean;
+        sx?: SxProps<Theme>;
     };
     defaultComponent: D;
-    classKey: TileButtonClassKey;
 }>;
 
 export type TileButtonProps<
-    D extends React.ElementType = TileButtonTypeMap['defaultComponent'],
+    D extends ElementType = TileButtonTypeMap['defaultComponent'],
     P = {}
 > = OverrideProps<TileButtonTypeMap<P, D>, D>;
 
-export const TileButton = withStyles(styles, { name: "TileButton", withTheme: true })(({
-    // from WithStyles
-    theme,
-    classes,
-
+export const TileButton = forwardRef(({
     // from TileButtonProps
     icon,
     children,
@@ -138,27 +119,34 @@ export const TileButton = withStyles(styles, { name: "TileButton", withTheme: tr
     color,
     className,
     ...props
-}: TileButtonProps & WithStyles<typeof styles, true>) => {
-    const twitch = color === "twitch";
-    if (color === "twitch") color = "default";
+}: TileButtonProps, ref: ForwardedRef<HTMLButtonElement>) => {
+    // state
+    // <none>
+
+    // behavior
+    // <none>
+    
+    // effects
+    // <none>
+
     // ui
-    return <>
-        <Button variant={variant} color={color} {...props} className={
-            clsx([
-                classes.root,
-                {
-                    [classes[`${variant}Twitch` as keyof typeof classes]]: twitch
-                },
-                className
-            ])}>
-            <Grid container direction="column" className={classes.container} wrap="nowrap">
-                <Grid item container className={classes.icon}>{icon}</Grid>
-                <Grid item container className={classes.caption} zeroMinWidth={noWrap}>
-                    <Typography className={classes.captionText} noWrap={noWrap}>
-                        {Children.toArray(children)}
-                    </Typography>
-                </Grid>
+    return <RootButton
+        ref={ref}
+        variant={variant}
+        color={color}
+        className={clsx([
+            classes.root,
+            { [classes[`${variant}Twitch`]]: color === "twitch" },
+            className
+        ])}
+        {...props}>
+        <Grid container direction="column" className={classes.container} wrap="nowrap">
+            <Grid item container className={classes.icon}>{icon}</Grid>
+            <Grid item container className={classes.caption} zeroMinWidth={noWrap}>
+                <Typography className={classes.captionText} noWrap={noWrap}>
+                    {Children.toArray(children)}
+                </Typography>
             </Grid>
-        </Button>
-    </>;
-});
+        </Grid>
+    </RootButton>;
+}) as OverridableFunctionComponent<TileButtonTypeMap>;

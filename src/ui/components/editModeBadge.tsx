@@ -1,42 +1,40 @@
-import React, { useContext } from "react";
-import { Badge, BadgeProps, makeStyles } from "@material-ui/core";
-import { AppContext } from "../utils/context";
-import clsx from "clsx";
-import { EditModeContext } from "./editModeContainer";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
 
-const useStyles = makeStyles(theme => ({
-    root: {
-        textTransform: "lowercase"
-    }
-}));
+import { Badge, BadgeProps } from "@mui/material";
+import clsx from "clsx";
+import { useAppContext } from "../utils/appContext";
+import { useEditContainerContext } from "../utils/editContainerContext";
+import { globalClasses } from "./globalStyles";
 
 export interface EditModeBadgeProps extends Omit<BadgeProps, "badgeContent"> {
-    hidden?: boolean;
 }
 
-export const EditModeBadge = ({
-    hidden: hiddenProp,
-    className,
-    ...props
-}: EditModeBadgeProps) => {
+/**
+ * A component that adds a badge in edit mode indicating whether a component is hidden or visible
+ * when not in edit mode.
+ */
+export const EditModeBadge = ({ className, ...props }: EditModeBadgeProps) => {
     // state
-    const classes = useStyles();
-    const { editMode } = useContext(AppContext);
-    const editModeContext = useContext(EditModeContext);
-    const hidden = hiddenProp ?? editModeContext.hidden;
+    const { editMode } = useAppContext();
+    const { hidden } = useEditContainerContext();
+
+    // behavior
+    // <none>
+
+    // effects
+    // <none>
+
+    // ui
     return <Badge
-        badgeContent={
-            editMode ? 
-                hidden ? 
-                    "hidden" :
-                    "visible" :
-            undefined
-        }
+        badgeContent={editMode ? hidden ? "hidden" : "visible" : undefined}
         color="secondary"
-        className={clsx([
-            classes.root,
+        className={clsx(
+            globalClasses.editModeBadge,
             className
-        ])}
+        )}
         {...props}
     />;
-}
+};

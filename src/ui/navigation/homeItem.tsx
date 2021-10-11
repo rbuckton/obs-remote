@@ -1,13 +1,17 @@
-import React from "react";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { Home as HomeIcon } from "@mui/icons-material";
+import { ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { ListItem, ListItemIcon, ListItemText } from "@material-ui/core";
-import { Home as HomeIcon } from "@material-ui/icons";
 
 export const HomeItem = () => {
     return <>
         <ListItem button component={RouterLink} to="/">
             <ListItemIcon><HomeIcon /></ListItemIcon>
-            <ListItemText>Home</ListItemText>
+            <ListItemText>Dashboard</ListItemText>
         </ListItem>
     </>;
 };

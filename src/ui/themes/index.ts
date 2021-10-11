@@ -1,4 +1,9 @@
-import { Theme } from "@material-ui/core";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { Theme } from "@mui/material";
 import { ThemeKind } from "../../themes/themeKind";
 import { DarkTheme } from "./dark";
 import { LightTheme } from "./light";

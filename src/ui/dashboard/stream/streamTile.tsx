@@ -1,8 +1,12 @@
-import React, {
-    useContext,
-    useEffect,
-    useState
-} from "react";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import {
+    ScreenShare as StreamIcon,
+    StopScreenShare as StopStreamIcon
+} from "@mui/icons-material";
 import {
     Button,
     CircularProgress,
@@ -11,16 +15,16 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-} from "@material-ui/core";
-import {
-    ScreenShare as StreamIcon,
-    StopScreenShare as StopStreamIcon
-} from "@material-ui/icons";
+    Grid
+} from "@mui/material";
+import { useContext, useState } from "react";
 import { TileButton } from "../../components/tileButton";
-import { AppContext } from "../../utils/context";
 import { useAsyncEffect } from "../../hooks/useAsyncEffect";
-import { useAsyncCallback } from "../../hooks/useAsyncCallback";
+import { useAsyncEventCallback } from "../../hooks/useAsyncEventCallback";
+import { useEvent } from "../../hooks/useEvent";
+import { useEventCallback } from "../../hooks/useEventCallback";
 import { TwitchGlitchIcon } from "../../icons/TwitchGlitchIcon";
+import { AppContext } from "../../utils/appContext";
 
 const enum StreamState {
     Unknown,
@@ -41,41 +45,52 @@ export const StreamTile = ({ }: StreamTileProps) => {
     const [state, setState] = useState(StreamState.Unknown);
     const [isTwitch, setIsTwitch] = useState<boolean>();
     const stopped = state === StreamState.Stopped || state === StreamState.StartRequested;
-    const starting = state === StreamState.Starting;
     const started = state === StreamState.Started || state === StreamState.StopRequested;
     const stopping = state === StreamState.Stopping;
 
     // behavior
-    const onStreamStarting = () => { setState(StreamState.Starting); };
-    const onStreamStarted = () => { setState(StreamState.Started); };
-    const onStreamStopping = () => { setState(StreamState.Stopping); };
-    const onStreamStopped = () => { setState(StreamState.Stopped); };
-    const onRequestStartStream = () => { setState(StreamState.StartRequested); };
-    const onCancelStartStream = () => { setState(StreamState.Stopped); };
-    const onConfirmStartStream = useAsyncCallback(async () => {
+    const onRequestStartStream = useEventCallback(() => {
+        setState(StreamState.StartRequested);
+    });
+
+    const onCancelStartStream = useEventCallback(() => {
+        setState(StreamState.Stopped);
+    });
+
+    const onConfirmStartStream = useAsyncEventCallback(async () => {
         setState(StreamState.Starting);
         await obs.send("StartStreaming", {});
     });
-    const onRequestStopStream = () => { setState(StreamState.StopRequested); };
-    const onCancelStopStream = () => { setState(StreamState.Started); };
-    const onConfirmStopStream = useAsyncCallback(async () => {
+
+    const onRequestStopStream = useEventCallback(() => {
+        setState(StreamState.StopRequested);
+    });
+
+    const onCancelStopStream = useEventCallback(() => {
+        setState(StreamState.Started);
+    });
+
+    const onConfirmStopStream = useAsyncEventCallback(async () => {
         setState(StreamState.Stopping);
         await obs.send("StopStreaming");
     });
 
     // effects
-    useEffect(() => {
-        obs.on("StreamStarting", onStreamStarting);
-        obs.on("StreamStarted", onStreamStarted);
-        obs.on("StreamStopping", onStreamStopping);
-        obs.on("StreamStopped", onStreamStopped);
-        return () => {
-            obs.off("StreamStarting", onStreamStarting);
-            obs.off("StreamStarted", onStreamStarted);
-            obs.off("StreamStopping", onStreamStopping);
-            obs.off("StreamStopped", onStreamStopped);
-        };
-    }, [obs, onStreamStarting, onStreamStarted, onStreamStopping, onStreamStopped]);
+    useEvent(obs, "StreamStarting", () => {
+        setState(StreamState.Starting);
+    });
+
+    useEvent(obs, "StreamStarted", () => {
+        setState(StreamState.Started);
+    });
+
+    useEvent(obs, "StreamStopping", () => {
+        setState(StreamState.Stopping);
+    });
+
+    useEvent(obs, "StreamStopped", () => {
+        setState(StreamState.Stopped);
+    });
 
     useAsyncEffect(async (token) => {
         const [{ settings }, status] = await Promise.all([
@@ -88,7 +103,7 @@ export const StreamTile = ({ }: StreamTileProps) => {
     }, [obs]);
 
     // ui
-    return <>
+    return <Grid item>
         <Dialog
             open={state === StreamState.StartRequested}
             aria-labelledby="golive-dialog-title"
@@ -126,9 +141,9 @@ export const StreamTile = ({ }: StreamTileProps) => {
                 <CircularProgress size={24} />
             }
             color={
-                started ? "secondary" :
+                started ? "error" :
                 stopped && isTwitch ? "twitch" :
-                "default"
+                "primary"
             }
             disabled={!started && !stopped}
             onClick={
@@ -138,5 +153,5 @@ export const StreamTile = ({ }: StreamTileProps) => {
             }>
             {started || stopping ? "End Stream" : "Go Live"}
         </TileButton>
-    </>;
+    </Grid>;
 };

@@ -1,51 +1,69 @@
-import React, { useEffect, useState } from "react";
-import { useService } from "./useService";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { IPreferencesService, PreferenceKeys } from "../../preferences/common/preferencesService";
+import { useEvent } from "./useEvent";
+import { useService } from "./useService";
 
 /**
- * A hook to read a preference value and observe changes
+ * A hook to read a preference value and observe changes.
  */
-export function usePreference<K extends PreferenceKeys>(key: K) {
+export function usePreference<K extends PreferenceKeys>(key: K): [value: IPreferencesService[K], setValue: Dispatch<SetStateAction<IPreferencesService[K]>>] {
+    // state
     const preferences = useService(IPreferencesService);
-    const [value, setValue] = useState(() => preferences[key]);
-    useEffect(() => {
-        const onDidPreferenceChange = (_key: PreferenceKeys) => {
-            if (_key === key) setValue(preferences[key]);
-        };
-        preferences.onDidChange.on(onDidPreferenceChange);
-        return () => { preferences.onDidChange.off(onDidPreferenceChange); };
-    }, [preferences, setValue]);
-    return value;
+    const [state, setState] = useState(() => preferences[key]);
+
+    // behavior
+    const setValue: typeof setState = useCallback(value => {
+        const prev = preferences[key];
+        if (typeof value === "function") {
+            value = value(prev);
+        }
+        if (!Object.is(prev, value)) {
+            preferences[key] = value;
+        }
+    }, [preferences, key]);
+
+    // effects
+    useEvent(preferences.onDidChange, k => {
+        if (k === key) {
+            setState(preferences[key]);
+        }
+    });
+
+    return [state, setValue];
 }
 
 export type PreferenceEditor<K extends PreferenceKeys> = [
     value: IPreferencesService[K],
-    setValue: React.Dispatch<React.SetStateAction<IPreferencesService[K]>>,
+    setValue: Dispatch<SetStateAction<IPreferencesService[K]>>,
     commit: (...args: [value: IPreferencesService[K]] | []) => void,
     revert: () => void
-] & {
-    value: IPreferencesService[K],
-    setValue: React.Dispatch<React.SetStateAction<IPreferencesService[K]>>,
-    commit: (...args: [value: IPreferencesService[K]] | []) => void;
-    revert: () => void
-};
+];
 
 /**
- * A hook to edit a preference value and observe changes
+ * A hook to transactionally edit a preference value and observe changes
  */
-export function usePreferenceEditor<K extends PreferenceKeys>(key: K) {
-    const preferences = useService(IPreferencesService);
-    const [value, setValue] = useState(() => preferences[key]);
-    const commit = (...args: [value: IPreferencesService[K]] | []) => {
-        const commitValue = args.length === 0 ? value : args[0];
-        setValue(commitValue);
-        preferences[key] = commitValue;
-    };
-    const revert = () => { setValue(preferences[key]); };
-    useEffect(() => {
-        const onDidPreferenceChange = (k: PreferenceKeys) => { if (k === key) setValue(preferences[key]); };
-        preferences.onDidChange.on(onDidPreferenceChange);
-        return () => { preferences.onDidChange.off(onDidPreferenceChange); };
-    }, [preferences, key, setValue]);
-    return Object.assign([value, setValue, commit, revert], { value, setValue, commit, revert }) as PreferenceEditor<K>;
+export function usePreferenceEditor<K extends PreferenceKeys>(key: K): PreferenceEditor<K> {
+    // state
+    const [prefValue, setPrefValue] = usePreference(key);
+    const [tempValue, setTempValue] = useState(prefValue);
+
+    // behavior
+    const commit = useCallback((...args: [value: IPreferencesService[K]] | []) => {
+        const commitValue = args.length === 0 ? tempValue : args[0];
+        setPrefValue(commitValue);
+    }, [tempValue]);
+
+    const revert = useCallback(() => {
+        setTempValue(prefValue);
+    }, [prefValue]);
+
+    // effects
+    // <none>
+
+    return [tempValue, setTempValue, commit, revert];
 }

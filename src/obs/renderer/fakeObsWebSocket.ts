@@ -1,11 +1,13 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import { delay } from "@esfx/async-delay";
-import { remote } from "electron";
-import { EventEmitter } from "events";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
-import { GetVideoInfoResponse, OBSStats, ObsWebSocketEventArgsList, ObsWebSocketEvents, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse, Scene, SceneItem, Source, SourceType, SourceTypeCapabilities, SpecialSources } from "../common/protocol";
-import { IObsWebSocket } from "./obsWebSocket";
+import { IAppInfoService } from "../../app/common/appInfoService";
+import { EVENTS, TypedEventEmitter } from "../../core/common/events";
+import { BatchResponse, GetVideoInfoResponse, OBSStats, ObsWebSocketEvents, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse, Scene, SceneItem, Source, SourceType, SourceTypeCapabilities, SpecialSources } from "../common/protocol";
+import { IObsWebSocket } from "./iObsWebSocket";
 
 export type FakeObsWebSocketHandlers = ThisType<FakeObsWebSocket> & {
     connect?: (this: FakeObsWebSocket, options?: { address?: string; password?: string; secure?: boolean }) => Promise<void> | void;
@@ -13,9 +15,16 @@ export type FakeObsWebSocketHandlers = ThisType<FakeObsWebSocket> & {
     requests?: ThisType<FakeObsWebSocket> & {
         [P in keyof ObsWebSocketRequests]?: (this: FakeObsWebSocket, arg: ObsWebSocketRequests[P]["request"]) => Promise<ObsWebSocketRequests[P]["response"]> | ObsWebSocketRequests[P]["response"];
     };
-}
+};
 
-export class FakeObsWebSocket extends EventEmitter implements IObsWebSocket {
+/**
+ * Provides a fake {@link IObsWebSocket} for use in demo mode and in tests.
+ */
+export class FakeObsWebSocket extends TypedEventEmitter implements IObsWebSocket {
+    declare [EVENTS]: ObsWebSocketEvents;
+
+    private _address: string | undefined;
+    private _secure = false;
     private _handlers: FakeObsWebSocketHandlers;
     private _connected = false;
 
@@ -28,14 +37,26 @@ export class FakeObsWebSocket extends EventEmitter implements IObsWebSocket {
         return this._connected;
     }
 
+    get address() {
+        return this._address ?? "localhost:4444";
+    }
+
+    get secure() {
+        return this._secure;
+    }
+
     async connect(options?: { address?: string; password?: string; secure?: boolean }): Promise<void> {
         if (this._handlers.connect) {
             await this._handlers.connect.call(this, options);
         }
+        this._address = options?.address ?? "localhost:4444";
+        this._secure = options?.secure ?? false;
         this._connected = true;
     }
 
     disconnect(): void {
+        this._address = undefined;
+        this._secure = false;
         this._connected = false;
         if (this._handlers.disconnect) {
             this._handlers.disconnect.call(this);
@@ -47,31 +68,11 @@ export class FakeObsWebSocket extends EventEmitter implements IObsWebSocket {
         if (handler) {
             return await (handler as Function).apply(this, args);
         }
-        throw new Error("Not handled");
+        throw new Error(`Not handled: send(${key}, ${args})`);
     }
 }
 
-export interface FakeObsWebSocket {
-    // Custom events
-    addListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    addListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    on<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    on<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    once<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    once<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    removeListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    removeListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    off<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    off<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependOnceListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependOnceListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    emit<K extends keyof ObsWebSocketEvents>(type: K, ...args: ObsWebSocketEventArgsList<K>): boolean;
-    emit<K extends string | symbol>(type: K, ...args: ObsWebSocketEventArgsList<K>): boolean;
-}
-
-export function createDefaultFakeObsWebSocket() {
+export function createDefaultFakeObsWebSocket(app: IAppInfoService) {
     interface TransitionType {
         readonly name: string;
         readonly supportsDuration: boolean;
@@ -212,23 +213,31 @@ export function createDefaultFakeObsWebSocket() {
             pulse = false;
         },
         requests: {
-            // General
+            // #region General
+
             async GetVersion() {
                 if (!connected) throw new Error();
                 return {
                     version: 1.1,
-                    "obs-websocket-version": "4.8.0",
+                    "obs-websocket-version": "4.9.1",
                     "obs-studio-version": "26.0.2",
                     "available-requests": Object.keys(handlers.requests!).sort().join(","),
                     "supported-image-export-formats": ["jpg", "jpeg"].sort().join(",")
                 }
             },
 
+            // GetAuthRequired
+            // Authenticate
+
             async SetHeartbeat({ enable }) {
                 if (!connected) throw new Error();
                 heartbeat = enable;
                 updateHeartbeatTimer();
             },
+
+            // SetFilenameFormatting
+            // GetFilenameFormatting
+            // GetStats
 
             async BroadcastCustomMessage({ realm, data }) {
                 if (!connected) throw new Error();
@@ -244,7 +253,418 @@ export function createDefaultFakeObsWebSocket() {
                 return deepClone(videoInfo);
             },
 
-            // Streaming
+            // OpenProjector
+            // TriggerHotkeyByName
+            // TriggerHotkeyBySequence
+
+            async ExecuteBatch({ requests, abortOnFail }) {
+                const results: BatchResponse<keyof ObsWebSocketRequests>[] = [];
+                for (let i = 0; i < requests.length; i++) {
+                    const request = requests[i];
+                    const { "message-id": messageId = "", "request-type": requestType } = request;
+                    const requestMessage = Object.fromEntries(Object.entries(request).filter(([key]) => key !== "message-id" && key !== "request-type"));
+                    try {
+                        const response = await obs.send(requestType, requestMessage);
+                        results.push({ "message-id": messageId, status: "ok", ...response });
+                    }
+                    catch (e) {
+                        results.push({ "message-id": messageId, status: "error", error: e instanceof Error ? e.message : `${e}`});
+                        if (abortOnFail) {
+                            break;
+                        }
+                    }
+                }
+                return { results };
+            },
+
+            async Sleep({ sleepMillis }) {
+                await new Promise(resolve => setTimeout(resolve, sleepMillis));
+            },
+
+            // #endregion General
+
+            // #region Media Control
+
+            // PlayPauseMedia
+            // RestartMedia
+            // StopMedia
+            // NextMedia
+            // PreviousMedia
+            // GetMediaDuration
+            // GetMediaTime
+            // SetMediaTime
+            // ScrubMedia
+            // GetMediaState
+
+            // #endregion Media Control
+
+            // #region Sources
+
+            // GetMediaSourcesList
+            // CreateSource
+
+            async GetSourcesList() {
+                if (!connected) throw new Error();
+                return {
+                    sources: deepClone(currentSceneCollection.sources)
+                };
+            },
+
+            async GetSourceTypesList() {
+                if (!connected) throw new Error();
+                return {
+                    types: deepClone(sourceTypes) as SourceType[]
+                };
+            },
+
+            async GetVolume({ source: sourceName, useDecibel }) {
+                if (!connected) throw new Error();
+                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
+                if (!source) throw new Error();
+                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
+                if (!sourceType) throw new Error();
+                const volume = sourceType.caps.hasAudio ? currentSceneCollection.sourceVolume.get(sourceName) ?? 1.0 : 0.0;
+                const muted = sourceType.caps.hasAudio ? currentSceneCollection.sourceMute.get(sourceName) ?? false : true;
+                return {
+                    name: sourceName,
+                    volume: useDecibel ? -(volume * 50) : Math.min(volume, 1.0),
+                    muted
+                };
+            },
+
+            async SetVolume({ source: sourceName, volume, useDecibel }) {
+                if (!connected) throw new Error();
+                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
+                if (!source) throw new Error();
+                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
+                if (!sourceType) throw new Error();
+                if (!sourceType.caps.hasAudio) return;
+                const currentVolume = currentSceneCollection.sourceVolume.get(sourceName) ?? 1.0;
+                volume = Math.max(0, Math.min(1.0, useDecibel ? -(volume / 50) : volume));
+                if (volume !== currentVolume) {
+                    currentSceneCollection.sourceVolume.set(sourceName, volume);
+                    this.emit("SourceVolumeChanged", {
+                        sourceName,
+                        volume
+                    });
+                }
+            },
+
+            // GetAudioTracks
+            // SetAudioTracks
+
+            async GetMute({ source: sourceName }) {
+                if (!connected) throw new Error();
+                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
+                if (!source) throw new Error();
+                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
+                if (!sourceType) throw new Error();
+                const muted = sourceType.caps.hasAudio ? currentSceneCollection.sourceMute.get(sourceName) ?? false : true;
+                return {
+                    name: sourceName,
+                    muted
+                };
+            },
+
+            async SetMute({ source: sourceName, mute }) {
+                if (!connected) throw new Error();
+                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
+                if (!source) throw new Error();
+                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
+                if (!sourceType) throw new Error();
+                if (!sourceType.caps.hasAudio) return;
+                const currentMute = currentSceneCollection.sourceMute.get(sourceName) ?? false;
+                if (mute !== currentMute) {
+                    currentSceneCollection.sourceMute.set(sourceName, mute);
+                    this.emit("SourceMuteStateChanged", {
+                        sourceName,
+                        muted: mute
+                    });
+                }
+            },
+
+            async ToggleMute({ source: sourceName }) {
+                if (!connected) throw new Error();
+                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
+                if (!source) throw new Error();
+                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
+                if (!sourceType) throw new Error();
+                if (!sourceType.caps.hasAudio) return;
+                const currentMute = currentSceneCollection.sourceMute.get(sourceName) ?? false;
+                const mute = !currentMute;
+                currentSceneCollection.sourceMute.set(sourceName, mute);
+                this.emit("SourceMuteStateChanged", {
+                    sourceName,
+                    muted: mute
+                });
+            },
+
+            // GetSourceActive
+            // GetAudioActive
+            // SetSourceName
+            // GetSyncOffset
+            // SetSyncOffset
+
+            async GetSourceSettings({ sourceName, sourceType }) {
+                const source = currentSceneCollection.sources.find(s => s.name === sourceName && (sourceType === undefined || s.typeId === sourceType));
+                if (!source) throw new Error();
+                const settings = sourceSettings.get(source.name);
+                return {
+                    sourceName: source.name,
+                    sourceType: source.typeId,
+                    sourceSettings: deepClone(settings) || {}
+                };
+            },
+
+            async SetSourceSettings({ sourceName, sourceType, sourceSettings: newSettings }) {
+                const source = currentSceneCollection.sources.find(s => s.name === sourceName && (sourceType === undefined || s.typeId === sourceType));
+                if (!source) throw new Error();
+                const settings = { ...sourceSettings.get(source.name), ...deepClone(newSettings) };
+                sourceSettings.set(source.name, settings);
+                return {
+                    sourceName: source.name,
+                    sourceType: source.typeId,
+                    sourceSettings: deepClone(settings)
+                };
+            },
+
+            // GetTextGDIPlusProperties
+            // SetTextGDIPlusProperties
+            // GetTextFreetype2Properties
+            // SetTextFreetype2Properties
+            // GetBrowserSourceProperties
+            // SetBrowserSourceProperties
+
+            async GetSpecialSources() {
+                if (!connected) throw new Error();
+                return deepClone(currentSceneCollection.specialSources);
+            },
+
+            // GetSourceFilters
+            // GetSourceFilterInfo
+            // AddFilterToSource
+            // RemoveFilterFromSource
+            // ReorderSourceFilter
+            // MoveSourceFilter
+            // SetSourceFilterSettings
+            // SetSourceFilterVisibility
+            // GetAudioMonitorType
+            // SetAudioMonitorType
+            // GetSourceDefaultSettings
+
+            async TakeSourceScreenshot({ sourceName, embedPictureFormat, saveToFilePath, fileFormat, compressionQuality, width, height }) {
+                if (!connected) throw new Error();
+                return {
+                    sourceName,
+                    img: embedPictureFormat ? await getFakeScreenshotUri(app) : undefined,
+                    imageFile: saveToFilePath
+                };
+            },
+
+            // RefreshBrowserSource
+
+            // #endregion Sources
+
+            // #region Outputs
+
+            async ListOutputs() {
+                return { outputs: [] };
+            },
+
+            // GetOutputInfo
+            // StartOutput
+            // StopOutput
+
+            // #endregion Outputs
+
+            // #region Profiles
+
+            // SetCurrentProfile
+            // GetCurrentProfile
+
+            async ListProfiles() {
+                return { profiles: [] };
+            },
+
+            // #endregion Profiles
+
+            // #region Recording
+
+            // GetRecordingStatus
+
+            async StartStopRecording() {
+                if (!connected) throw new Error();
+                switch (recordingState) {
+                    case false:
+                    case "stopping":
+                        await startRecording();
+                        break;
+                    case true:
+                    case "starting":
+                    case "paused":
+                        await stopRecording();
+                        break;
+                }
+            },
+
+            async StartRecording() {
+                if (!connected) throw new Error();
+                if (recordingState) throw new Error();
+                await startRecording();
+            },
+
+            async StopRecording() {
+                if (!connected) throw new Error();
+                if (recordingState !== true && recordingState !== "paused") throw new Error();
+                if (recordingState !== "paused") {
+                    recordingStopTime = now();
+                }
+                await stopRecording();
+            },
+
+            async PauseRecording() {
+                if (!connected) throw new Error();
+                if (recordingState !== true) throw new Error();
+                pauseRecording();
+            },
+
+            async ResumeRecording() {
+                if (!connected) throw new Error();
+                if (recordingState !== "paused") throw new Error();
+                resumeRecording();
+            },
+
+            // GetRecordingFolder
+            // SetRecordingFolder
+
+            // #endregion Recording
+
+            // #region Replay Buffer
+
+            // GetReplayBufferStatus
+
+            async StartStopReplayBuffer() {
+                if (!connected) throw new Error();
+                switch (replayBufferState) {
+                    case false:
+                    case "stopping":
+                        await startReplayBuffer();
+                        break;
+                    case true:
+                    case "starting":
+                        await stopReplayBuffer();
+                        break;
+                }
+            },
+
+            async StartReplayBuffer() {
+                if (!connected) throw new Error();
+                if (replayBufferState) throw new Error();
+                await startReplayBuffer();
+            },
+
+            async StopReplayBuffer() {
+                if (!connected) throw new Error();
+                if (replayBufferState !== true) throw new Error();
+                await stopReplayBuffer();
+            },
+
+            async SaveReplayBuffer() {
+                if (!connected) throw new Error();
+                await delay(500);
+            },
+
+            // #endregion Replay Buffer
+
+            // #region Scene Collections
+
+            async SetCurrentSceneCollection({ "sc-name": name }) {
+                if (!connected) throw new Error();
+                if (currentSceneCollection.name === name) return;
+                const sceneCollection = sceneCollections.find(sc => sc.name === name);
+                if (!sceneCollection) throw new Error();
+                if (currentSceneCollection !== sceneCollection) {
+                    currentSceneCollection = sceneCollection;
+                    this.emit("SceneCollectionChanged");
+                }
+            },
+
+            async GetCurrentSceneCollection() {
+                if (!connected) throw new Error();
+                return {
+                    "sc-name": currentSceneCollection.name
+                };
+            },
+
+            async ListSceneCollections() {
+                if (!connected) throw new Error();
+                return {
+                    "scene-collections": sceneCollections.map(sc => ({ "sc-name": sc.name }))
+                };
+            },
+
+            // #endregion Scene Collections
+
+            // #region Scene Items
+
+            async GetSceneItemList() {
+                return { sceneName: currentSceneCollection.currentScene.name, sceneItems: currentSceneCollection.currentScene.sources.map(source => ({
+                    itemId: source.id,
+                    sourceName: source.name,
+                    sourceKind: source.type,
+                    sourceType: source.type === "scene" ? "scene" :
+                        source.groupChildren ? "group" :
+                        "input" })) };
+            },
+
+            // GetSceneItemProperties
+            // SetSceneItemProperties
+            // ResetSceneItem
+            // SetSceneItemRender
+            // SetSceneItemPosition
+            // SetSceneItemTransform
+            // SetSceneItemCrop
+            // DeleteSceneItem
+            // AddSceneItem
+            // DuplicateSceneItem
+
+            // #endregion Scene Items
+
+            // #region Scenes
+
+            async SetCurrentScene(arg) {
+                if (!connected) throw new Error();
+                if (currentSceneCollection.currentScene?.name === arg["scene-name"]) return;
+                const newScene = currentSceneCollection.scenes.find(scene => scene.name === arg["scene-name"]);
+                if (!newScene) throw new Error();
+                await switchScenes(newScene);
+            },
+
+            async GetCurrentScene() {
+                if (!connected) throw new Error();
+                if (!currentSceneCollection.currentScene) throw new Error();
+                return deepClone(currentSceneCollection.currentScene);
+            },
+
+            async GetSceneList() {
+                if (!connected) throw new Error();
+                if (!currentSceneCollection.currentScene) throw new Error();
+                return {
+                    "current-scene": currentSceneCollection.currentScene.name,
+                    scenes: deepClone(currentSceneCollection.scenes)
+                };
+            },
+
+            // CreateScene
+            // ReorderSceneItems
+            // SetSceneTransitionOverride
+            // RemoveSceneTransitionOverride
+            // GetSceneTransitionOverride
+
+            // #endregion Scenes
+
+            // #region Streaming
+
             async GetStreamingStatus() {
                 if (!connected) throw new Error();
                 return {
@@ -311,266 +731,9 @@ export function createDefaultFakeObsWebSocket() {
                 if (!connected) throw new Error();
             },
 
-            // Recording
+            // SendCaptions
 
-            async StartStopRecording() {
-                if (!connected) throw new Error();
-                switch (recordingState) {
-                    case false:
-                    case "stopping":
-                        await startRecording();
-                        break;
-                    case true:
-                    case "starting":
-                    case "paused":
-                        await stopRecording();
-                        break;
-                }
-            },
-
-            async StartRecording() {
-                if (!connected) throw new Error();
-                if (recordingState) throw new Error();
-                await startRecording();
-            },
-
-            async StopRecording() {
-                if (!connected) throw new Error();
-                if (recordingState !== true && recordingState !== "paused") throw new Error();
-                if (recordingState !== "paused") {
-                    recordingStopTime = now();
-                }
-                await stopRecording();
-            },
-
-            async PauseRecording() {
-                if (!connected) throw new Error();
-                if (recordingState !== true) throw new Error();
-                pauseRecording();
-            },
-
-            async ResumeRecording() {
-                if (!connected) throw new Error();
-                if (recordingState !== "paused") throw new Error();
-                resumeRecording();
-            },
-
-            // Replay Buffer
-
-            async StartStopReplayBuffer() {
-                if (!connected) throw new Error();
-                switch (replayBufferState) {
-                    case false:
-                    case "stopping":
-                        await startReplayBuffer();
-                        break;
-                    case true:
-                    case "starting":
-                        await stopReplayBuffer();
-                        break;
-                }
-            },
-
-            async StartReplayBuffer() {
-                if (!connected) throw new Error();
-                if (replayBufferState) throw new Error();
-                await startReplayBuffer();
-            },
-
-            async StopReplayBuffer() {
-                if (!connected) throw new Error();
-                if (replayBufferState !== true) throw new Error();
-                await stopReplayBuffer();
-            },
-
-            async SaveReplayBuffer() {
-                if (!connected) throw new Error();
-                await delay(500);
-            },
-
-            // Scenes
-            async SetCurrentScene(arg) {
-                if (!connected) throw new Error();
-                if (currentSceneCollection.currentScene?.name === arg["scene-name"]) return;
-                const newScene = currentSceneCollection.scenes.find(scene => scene.name === arg["scene-name"]);
-                if (!newScene) throw new Error();
-                await switchScenes(newScene);
-            },
-
-            async GetCurrentScene() {
-                if (!connected) throw new Error();
-                if (!currentSceneCollection.currentScene) throw new Error();
-                return deepClone(currentSceneCollection.currentScene);
-            },
-
-            async GetSceneList() {
-                if (!connected) throw new Error();
-                if (!currentSceneCollection.currentScene) throw new Error();
-                return {
-                    "current-scene": currentSceneCollection.currentScene.name,
-                    scenes: deepClone(currentSceneCollection.scenes)
-                };
-            },
-
-            // Sources
-            async GetSourcesList() {
-                if (!connected) throw new Error();
-                return {
-                    sources: deepClone(currentSceneCollection.sources)
-                };
-            },
-
-            async GetSourceTypesList() {
-                if (!connected) throw new Error();
-                return {
-                    types: deepClone(sourceTypes) as SourceType[]
-                };
-            },
-
-            async GetVolume({ source: sourceName, useDecibel }) {
-                if (!connected) throw new Error();
-                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
-                if (!source) throw new Error();
-                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
-                if (!sourceType) throw new Error();
-                const volume = sourceType.caps.hasAudio ? currentSceneCollection.sourceVolume.get(sourceName) ?? 1.0 : 0.0;
-                const muted = sourceType.caps.hasAudio ? currentSceneCollection.sourceMute.get(sourceName) ?? false : true;
-                return {
-                    name: sourceName,
-                    volume: useDecibel ? -(volume * 50) : Math.min(volume, 1.0),
-                    muted
-                };
-            },
-
-            async SetVolume({ source: sourceName, volume, useDecibel }) {
-                if (!connected) throw new Error();
-                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
-                if (!source) throw new Error();
-                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
-                if (!sourceType) throw new Error();
-                if (!sourceType.caps.hasAudio) return;
-                const currentVolume = currentSceneCollection.sourceVolume.get(sourceName) ?? 1.0;
-                volume = Math.max(0, Math.min(1.0, useDecibel ? -(volume / 50) : volume));
-                if (volume !== currentVolume) {
-                    currentSceneCollection.sourceVolume.set(sourceName, volume);
-                    this.emit("SourceVolumeChanged", {
-                        sourceName,
-                        volume
-                    });
-                }
-            },
-
-            async GetMute({ source: sourceName }) {
-                if (!connected) throw new Error();
-                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
-                if (!source) throw new Error();
-                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
-                if (!sourceType) throw new Error();
-                const muted = sourceType.caps.hasAudio ? currentSceneCollection.sourceMute.get(sourceName) ?? false : true;
-                return {
-                    name: sourceName,
-                    muted
-                };
-            },
-
-            async SetMute({ source: sourceName, mute }) {
-                if (!connected) throw new Error();
-                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
-                if (!source) throw new Error();
-                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
-                if (!sourceType) throw new Error();
-                if (!sourceType.caps.hasAudio) return;
-                const currentMute = currentSceneCollection.sourceMute.get(sourceName) ?? false;
-                if (mute !== currentMute) {
-                    currentSceneCollection.sourceMute.set(sourceName, mute);
-                    this.emit("SourceMuteStateChanged", {
-                        sourceName,
-                        muted: mute
-                    });
-                }
-            },
-
-            async ToggleMute({ source: sourceName }) {
-                if (!connected) throw new Error();
-                const source = currentSceneCollection.sources.find(source => source.name === sourceName);
-                if (!source) throw new Error();
-                const sourceType = sourceTypes.find(sourceType => sourceType.typeId === source.typeId);
-                if (!sourceType) throw new Error();
-                if (!sourceType.caps.hasAudio) return;
-                const currentMute = currentSceneCollection.sourceMute.get(sourceName) ?? false;
-                const mute = !currentMute;
-                currentSceneCollection.sourceMute.set(sourceName, mute);
-                this.emit("SourceMuteStateChanged", {
-                    sourceName,
-                    muted: mute
-                });
-            },
-
-            async GetSourceSettings({ sourceName, sourceType }) {
-                const source = currentSceneCollection.sources.find(s => s.name === sourceName && (sourceType === undefined || s.typeId === sourceType));
-                if (!source) throw new Error();
-                const settings = sourceSettings.get(source.name);
-                return {
-                    sourceName: source.name,
-                    sourceType: source.typeId,
-                    sourceSettings: deepClone(settings) || {}
-                };
-            },
-
-            async SetSourceSettings({ sourceName, sourceType, sourceSettings: newSettings }) {
-                const source = currentSceneCollection.sources.find(s => s.name === sourceName && (sourceType === undefined || s.typeId === sourceType));
-                if (!source) throw new Error();
-                const settings = { ...sourceSettings.get(source.name), ...deepClone(newSettings) };
-                sourceSettings.set(source.name, settings);
-                return {
-                    sourceName: source.name,
-                    sourceType: source.typeId,
-                    sourceSettings: deepClone(settings)
-                };
-            },
-
-            async GetSpecialSources() {
-                if (!connected) throw new Error();
-                return deepClone(currentSceneCollection.specialSources);
-            },
-
-            async TakeSourceScreenshot({ sourceName, embedPictureFormat, saveToFilePath, fileFormat, compressionQuality, width, height }) {
-                if (!connected) throw new Error();
-                return {
-                    sourceName,
-                    img: embedPictureFormat ? await getFakeScreenshotUri() : undefined,
-                    imageFile: saveToFilePath
-                };
-            },
-
-            // Profiles (TBD)
-
-            // Scene Collections
-
-            async SetCurrentSceneCollection({ "sc-name": name }) {
-                if (!connected) throw new Error();
-                if (currentSceneCollection.name === name) return;
-                const sceneCollection = sceneCollections.find(sc => sc.name === name);
-                if (!sceneCollection) throw new Error();
-                if (currentSceneCollection !== sceneCollection) {
-                    currentSceneCollection = sceneCollection;
-                    this.emit("SceneCollectionChanged");
-                }
-            },
-
-            async GetCurrentSceneCollection() {
-                if (!connected) throw new Error();
-                return {
-                    "sc-name": currentSceneCollection.name
-                };
-            },
-
-            async ListSceneCollections() {
-                if (!connected) throw new Error();
-                return {
-                    "scene-collections": sceneCollections.map(sc => ({ "sc-name": sc.name }))
-                };
-            },
+            // #endregion Streaming
 
             // #region Studio Mode
 
@@ -679,7 +842,21 @@ export function createDefaultFakeObsWebSocket() {
                 return { position };
             },
 
+            // GetTransitionSettings
+            // SetTransitionSettings
+            // ReleaseTBar
+            // SetTBarPosition
+
             // #endregion Transitions
+
+            // #region Virtual Cam
+
+            // GetVirtualCamStatus
+            // StartStopVirtualCam
+            // StartVirtualCam
+            // StopVirtualCam
+
+            // #endregion Virtual Cam
         }
     };
 
@@ -769,8 +946,8 @@ export function createDefaultFakeObsWebSocket() {
             "output-total-frames": Math.max(streamTime, recordingTime) * fps,
             "output-skipped-frames": 0,
             "average-frame-time": fps * 1000,
-            "cpu-usage": os.cpus().reduce((a, cpu) => a, 0),
-            "memory-usage": os.freemem() / (1024 * 1024),
+            "cpu-usage": 0,
+            "memory-usage": app.getFreeMemory() / (1024 * 1024),
             "free-disk-space": 1024
         };
     }
@@ -1297,12 +1474,10 @@ function createSourceTypes(callback: (builder: SourceTypeBuilder) => void): read
 
 let imageUri: string | undefined;
 
-export async function getFakeScreenshotUri() {
+export async function getFakeScreenshotUri(app: IAppInfoService) {
     if (!imageUri) {
-        const screenshotPath = path.resolve(remote.app.getAppPath(), "assets/screenshot.jpg");
         try {
-            const data = fs.readFileSync(screenshotPath);
-            imageUri = `data:image/jpeg;base64,${data.toString("base64")}`;
+            imageUri = await app.getFakeScreenshotDataUri();
         }
         catch (e) {
             console.error(e);

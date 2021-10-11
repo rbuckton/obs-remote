@@ -1,3 +1,8 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import { Disposable } from "@esfx/disposable";
 import { Event, EventSource } from "@esfx/events";
 import { MatchingKey, NonConstructor } from "service-composition/dist/types";
@@ -6,128 +11,189 @@ import { IpcContractBase, IpcMessageNames, IpcMessageFunction, IpcMessageSyncFun
 import { IpcServer, IpcServerEventEmitter, IpcServerSync } from "./server";
 
 export interface IpcServerDecorators<TContract extends IpcContractBase<TContract>, TEvents extends IpcEventContractBase<TEvents>> {
+    /**
+     * Decorates a class that should serve as an IPC server on the electron Main thread.
+     */
     IpcServerClass<C extends abstract new (...args: any[]) => Disposable>(target: C): C;
+
+    /**
+     * Decorates an IPC server method that can be invoked asynchronously by an IPC client.
+     */
     IpcServerMethod<O extends object, K extends IpcMessageNames<TContract>, T extends IpcMessageFunction<TContract, K>>(target: NonConstructor<O>, propertyKey: K, descriptor: TypedPropertyDescriptor<T>): void;
+    /**
+     * Decorates an IPC server method that can be invoked asynchronously by an IPC client.
+     */
     IpcServerMethod(): <O extends object, K extends IpcMessageNames<TContract>, T extends IpcMessageFunction<TContract, K>>(target: NonConstructor<O>, propertyKey: K, descriptor: TypedPropertyDescriptor<T>) => void;
+    /**
+     * Decorates an IPC server method that can be invoked asynchronously by an IPC client.
+     */
     IpcServerMethod<K extends IpcMessageNames<TContract>>(key: K): <O extends object, T extends IpcMessageFunction<TContract, K>>(target: NonConstructor<O>, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) => void;
+    /**
+     * Decorates an IPC server method that can be invoked asynchronously by an IPC client.
+     */
     IpcServerMethod<K extends IpcMessageNames<TContract>, A extends ConvertersArray>(key: K, converters: A): <O extends object, T extends (...args: IpcMessageParameterConverters<TContract, K, A>) => Promise<IpcMessageReturnType<TContract, K>>>(target: NonConstructor<O>, propertyKey: string | symbol, descriptor?: TypedPropertyDescriptor<T>) => void;
+    /**
+     * Decorates an IPC server method that can be invoked asynchronously by an IPC client.
+     */
     IpcServerMethod<A extends ConvertersArray | []>(converters: A): <O extends object, K extends IpcMessageNames<TContract>, T extends (...args: IpcMessageParameterConverters<TContract, K, A>) => Promise<IpcMessageReturnType<TContract, K>>>(target: NonConstructor<O>, propertyKey: K, descriptor?: TypedPropertyDescriptor<T>) => void;
+
+    /**
+     * Decorates an IPC server method that can be invoked synchronously by an IPC client.
+     */
     IpcServerSyncMethod<O extends object, K extends IpcMessageNames<TContract>, T extends IpcMessageSyncFunction<TContract, K>>(target: NonConstructor<O>, propertyKey: K, descriptor: TypedPropertyDescriptor<T>): void;
+    /**
+     * Decorates an IPC server method that can be invoked synchronously by an IPC client.
+     */
     IpcServerSyncMethod(): <O extends object, K extends IpcMessageNames<TContract>, T extends IpcMessageSyncFunction<TContract, K>>(target: NonConstructor<O>, propertyKey: K, descriptor: TypedPropertyDescriptor<T>) => void;
+    /**
+     * Decorates an IPC server method that can be invoked synchronously by an IPC client.
+     */
     IpcServerSyncMethod<K extends IpcMessageNames<TContract>>(key: K): <O extends object, T extends IpcMessageSyncFunction<TContract, K>>(target: NonConstructor<O>, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) => void;
+    /**
+     * Decorates an IPC server method that can be invoked synchronously by an IPC client.
+     */
     IpcServerSyncMethod<K extends IpcMessageNames<TContract>, A extends ConvertersArray>(key: K, converters: A | []): <O extends object, T extends (...args: IpcMessageParameterConverters<TContract, K, A>) => IpcMessageSyncReturnType<TContract, K>>(target: NonConstructor<O>, propertyKey: string | symbol, descriptor?: TypedPropertyDescriptor<T>) => void;
+    /**
+     * Decorates an IPC server method that can be invoked synchronously by an IPC client.
+     */
     IpcServerSyncMethod<A extends ConvertersArray | []>(converters: A): <O extends object, K extends IpcMessageNames<TContract>, T extends (...args: IpcMessageParameterConverters<TContract, K, A>) => IpcMessageSyncReturnType<TContract, K>>(target: NonConstructor<O>, propertyKey: K, descriptor?: TypedPropertyDescriptor<T>) => void;
+
+    /**
+     * Decorates an IPC server event that will be raised asynchronously on an IPC client.
+     */
     IpcServerEvent<O extends object, K extends Extract<IpcEventNames<TEvents>, keyof O>>(target: NonConstructor<O>, propertyKey: MatchingKey<O, K, EventSource<TEvents[K]>>): void;
+    /**
+     * Decorates an IPC server event that will be raised asynchronously on an IPC client.
+     */
     IpcServerEvent<O extends object, K extends IpcEventNames<TEvents>>(target: NonConstructor<O>, propertyKey: K, descriptor?: TypedPropertyDescriptor<EventSource<TEvents[K]>>): void;
+    /**
+     * Decorates an IPC server event that will be raised asynchronously on an IPC client.
+     */
     IpcServerEvent(): <O extends object, K extends IpcEventNames<TEvents>>(target: NonConstructor<O>, propertyKey: K, descriptor?: TypedPropertyDescriptor<EventSource<TEvents[K]>>) => void;
+    /**
+     * Decorates an IPC server event that will be raised asynchronously on an IPC client.
+     */
     IpcServerEvent<K extends IpcEventNames<TEvents>>(key: K): <O extends object>(target: NonConstructor<O>, propertyKey: string | symbol, descriptor?: TypedPropertyDescriptor<EventSource<TEvents[K]>>) => void;
 }
 
 export namespace IpcServerDecorators {
     const weakMemberMap = new WeakMap<object, Map<string, Map<string, ["IpcServerMethod" | "IpcServerSyncMethod" | "IpcServerEvent", string | symbol, ConvertersArray?]>>>();
-    
+
     /**
      * Creates an entangled set of decorators used to define an IPC server for a specific channel name.
      */
     export function create<TContract extends IpcContractBase<TContract>, TEvents extends IpcEventContractBase<TEvents>>(channel: string): IpcServerDecorators<TContract, TEvents> {
         return { IpcServerClass, IpcServerMethod, IpcServerSyncMethod, IpcServerEvent };
 
+        /**
+         * Decorates a class that should serve as an IPC Server
+         */
         function IpcServerClass<T extends abstract new (...args: any[]) => Disposable>(target: T): T {
             @MainOnly
             abstract class _ extends target {
-                #ipcServerAsync: IpcServer<any> | undefined;
-                #ipcServerSync: IpcServerSync<any> | undefined;
-                #ipcEventEmitter: IpcServerEventEmitter<any> | undefined;
+                #disposables: Disposable | undefined;
 
                 constructor(...args: any[]) {
                     super(...args);
                     const asyncMessageMap = Object.create(null);
                     const syncMessageMap = Object.create(null);
                     const messageNames = new Set<string>();
+                    let ipcServerAsync: IpcServer<any> | undefined;
+                    let ipcServerSync: IpcServerSync<any> | undefined;
+                    let ipcServerEventEmitter: IpcServerEventEmitter<any> | undefined;
                     let current = new.target.prototype;
-                    while (current && current !== Object.prototype) {
-                        const methodMap = weakMemberMap.get(current)?.get(channel);
-                        if (methodMap) {
-                            for (const [messageName, [kind, propertyKey, converters]] of methodMap) {
-                                if (messageNames.has(messageName)) continue;
-                                messageNames.add(messageName);
-                                if (kind === "IpcServerEvent") {
-                                    let source = (this as any)[propertyKey] as EventSource<any> | undefined;
-                                    if (source === undefined) {
-                                        source = Event.create(this);
-                                        Object.defineProperty(this, propertyKey, {
-                                            value: source,
-                                            enumerable: false,
-                                            configurable: true,
-                                            writable: true
-                                        });
-                                    }
-                                    else if (!(source instanceof EventSource)) {
-                                        throw new TypeError(`Expected ${propertyKey.toString()} to be an EventSource or 'undefined'.`);
-                                    }
-                                    source.event.on((...args) => {
-                                        this.#ipcEventEmitter?.emit(messageName, ...args);
-                                    });
-                                    this.#ipcEventEmitter ||= new IpcServerEventEmitter<any>(channel);
-                                }
-                                else {
-                                    const sync = kind === "IpcServerSyncMethod";
-                                    const wrapper = (...args: any[]) => {
-                                        if (converters) {
-                                            for (let i = 0; i < args.length && i < converters.length; i++) {
-                                                const converter = converters[i];
-                                                if (typeof converter === "function" && args[i] !== null && args[i] !== undefined) {
-                                                    args[i] = converter(args[i]);
-                                                }
-                                            }
+                    try {
+                        while (current && current !== Object.prototype) {
+                            const methodMap = weakMemberMap.get(current)?.get(channel);
+                            if (methodMap) {
+                                for (const [messageName, [kind, propertyKey, converters]] of methodMap) {
+                                    if (messageNames.has(messageName)) continue;
+                                    messageNames.add(messageName);
+                                    if (kind === "IpcServerEvent") {
+                                        let source = (this as any)[propertyKey] as EventSource<any> | undefined;
+                                        if (source === undefined) {
+                                            source = Event.create(this);
+                                            Object.defineProperty(this, propertyKey, {
+                                                value: source,
+                                                enumerable: false,
+                                                configurable: true,
+                                                writable: true
+                                            });
                                         }
-                                        return (this as any)[propertyKey](...args);
-                                    };
-                                    if (sync) {
-                                        syncMessageMap[messageName] = wrapper;
-                                        this.#ipcServerSync ||= new IpcServerSync<any>(channel, syncMessageMap);
+                                        else if (!(source instanceof EventSource)) {
+                                            throw new TypeError(`Expected ${propertyKey.toString()} to be an EventSource or 'undefined'.`);
+                                        }
+                                        source.event.on((...args) => {
+                                            ipcServerEventEmitter?.emit(messageName, ...args);
+                                        });
+                                        ipcServerEventEmitter ||= new IpcServerEventEmitter<any>(channel);
                                     }
                                     else {
-                                        asyncMessageMap[messageName] = async (...args: any[]) => wrapper(...args);
-                                        this.#ipcServerAsync ||= new IpcServer<any>(channel, asyncMessageMap);
+                                        const sync = kind === "IpcServerSyncMethod";
+                                        const wrapper = (...args: any[]) => {
+                                            if (converters) {
+                                                for (let i = 0; i < args.length && i < converters.length; i++) {
+                                                    const converter = converters[i];
+                                                    if (typeof converter === "function" && args[i] !== null && args[i] !== undefined) {
+                                                        args[i] = converter(args[i]);
+                                                    }
+                                                }
+                                            }
+                                            return (this as any)[propertyKey](...args);
+                                        };
+                                        if (sync) {
+                                            syncMessageMap[messageName] = wrapper;
+                                            ipcServerSync ||= new IpcServerSync<any>(channel, syncMessageMap);
+                                        }
+                                        else {
+                                            asyncMessageMap[messageName] = async (...args: any[]) => wrapper(...args);
+                                            ipcServerAsync ||= new IpcServer<any>(channel, asyncMessageMap);
+                                        }
                                     }
                                 }
                             }
+                            current = Object.getPrototypeOf(current);
                         }
-                        current = Object.getPrototypeOf(current);
                     }
+                    catch (e) {
+                        const disposables = Disposable.from([
+                            ipcServerAsync,
+                            ipcServerSync,
+                            ipcServerEventEmitter
+                        ]);
+                        Disposable.use(disposables, () => {
+                            throw e;
+                        });
+                    }
+
+                    this.#disposables = Disposable.from([
+                        ipcServerAsync,
+                        ipcServerSync,
+                        ipcServerEventEmitter,
+                        Disposable.create(() => super[Disposable.dispose]()),
+                    ]);
                 }
 
                 [Disposable.dispose]() {
-                    try {
-                        super[Disposable.dispose]();
+                    const disposables = this.#disposables;
+                    if (disposables) {
+                        this.#disposables = undefined;
+                        disposables[Disposable.dispose]();
                     }
-                    finally {
-                        try {
-                            const disposable = this.#ipcServerAsync;
-                            this.#ipcServerAsync = undefined;
-                            disposable?.dispose();
-                        }
-                        finally {
-                            try {
-                                const disposable = this.#ipcServerSync;
-                                this.#ipcServerSync = undefined;
-                                disposable?.dispose();
-                            }
-                            finally {
-                                const disposable = this.#ipcEventEmitter;
-                                this.#ipcEventEmitter = undefined;
-                                disposable?.dispose();
-                            }
-                        }
+                    else {
+                        super[Disposable.dispose]();
                     }
                 }
             }
+
             const name = /^ipcserver/i.test(target.name) ? target.name : `IpcServer${target.name.replace(/^(ipc|server)+/i, "")}`;
             Object.defineProperty(_, "name", { ...Object.getOwnPropertyDescriptor(_, "name"), value: name });
             return _;
         }
 
+        /**
+         * Decorates an IPC server method that can be invoked asynchronously by an IPC client.
+         */
         function IpcServerMethod(...args: [] | [string] | [string, ConvertersArray] | [ConvertersArray] | [object, string | symbol, TypedPropertyDescriptor<Function>?]): any {
             let key: string | undefined;
             let converters: ConvertersArray | undefined;
@@ -143,6 +209,9 @@ export namespace IpcServerDecorators {
             }
         }
 
+        /**
+         * Decorates an IPC server method that can be invoked synchronously by an IPC client.
+         */
         function IpcServerSyncMethod(...args: [] | [string] | [string, ConvertersArray] | [ConvertersArray] | [object, string | symbol, TypedPropertyDescriptor<Function>]): any {
             let key: string | undefined;
             let converters: ConvertersArray | undefined;
@@ -157,7 +226,10 @@ export namespace IpcServerDecorators {
                 addMember("IpcServerSyncMethod", channel, target, propertyKey, key, converters);
             }
         }
-        
+
+        /**
+         * Decorates an IPC server event that will be raised asynchronously on an IPC client.
+         */
         function IpcServerEvent(...args: [] | [string] | [object, string | symbol, TypedPropertyDescriptor<EventSource<any>>?]): any {
             let key: string | undefined;
             if (isEmptyOverload(args)) return decorator;

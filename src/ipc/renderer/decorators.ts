@@ -1,26 +1,82 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import { Disposable } from "@esfx/disposable";
 import { Event, EventSource } from "@esfx/events";
 import { MatchingKey, NonConstructor } from "service-composition/dist/types";
 import { RendererOnly } from "../../core/renderer/decorators";
-import { IpcContractBase, IpcMessageNames, IpcMessageFunction, IpcMessageSyncFunction, IpcMessageSyncReturnTypeConverter, IpcMessageReturnTypeConverter, IpcMessageParameters, IpcEventContractBase, IpcEventNames } from "../common/ipc";
+import { IpcContractBase, IpcEventContractBase, IpcEventNames, IpcMessageFunction, IpcMessageNames, IpcMessageParameters, IpcMessageReturnTypeConverter, IpcMessageSyncFunction, IpcMessageSyncReturnTypeConverter } from "../common/ipc";
 import { IpcClient, IpcClientEventObserver, IpcClientSync } from "./client";
 
 export interface IpcClientDecorators<TContract extends IpcContractBase<TContract>, TEvents extends IpcEventContractBase<TEvents>> {
+    /**
+     * Decorates a class that should serve as an IPC client on an electron Renderer thread
+     */
     IpcClientClass<C extends abstract new (...args: any[]) => Disposable>(target: C): C;
-    IpcClientMethod<K extends IpcMessageNames<TContract>, F extends IpcMessageFunction<TContract, K>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>): void;
-    IpcClientMethod(): <K extends IpcMessageNames<TContract>, F extends IpcMessageFunction<TContract, K>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>) => void;
-    IpcClientMethod<K extends IpcMessageNames<TContract>>(key: K): <F extends IpcMessageFunction<TContract, K>>(target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<F>) => void;
-    IpcClientMethod<K extends IpcMessageNames<TContract>, A, B>(key: K, converter: (value: A) => B): <F extends (...args: IpcMessageParameters<TContract, K>) => IpcMessageReturnTypeConverter<TContract, K, A, B>>(target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<F>) => void;
-    IpcClientMethod<A, B>(converter: (value: A) => B): <K extends IpcMessageNames<TContract>, F extends (...args: IpcMessageParameters<TContract, K>) => IpcMessageReturnTypeConverter<TContract, K, A, B>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>) => void;
+
+    /**
+     * Decorates an IPC client method stub that can be invoked asynchronously on an IPC server.
+     */
+    IpcClientAsyncMethod<K extends IpcMessageNames<TContract>, F extends IpcMessageFunction<TContract, K>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>): void;
+    /**
+     * Decorates an IPC client method stub that can be invoked asynchronously on an IPC server.
+     */
+    IpcClientAsyncMethod(): <K extends IpcMessageNames<TContract>, F extends IpcMessageFunction<TContract, K>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>) => void;
+    /**
+     * Decorates an IPC client method stub that can be invoked asynchronously on an IPC server.
+     */
+    IpcClientAsyncMethod<K extends IpcMessageNames<TContract>>(key: K): <F extends IpcMessageFunction<TContract, K>>(target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<F>) => void;
+    /**
+     * Decorates an IPC client method stub that can be invoked asynchronously on an IPC server.
+     */
+    IpcClientAsyncMethod<K extends IpcMessageNames<TContract>, A, B>(key: K, converter: (value: A) => B): <F extends (...args: IpcMessageParameters<TContract, K>) => IpcMessageReturnTypeConverter<TContract, K, A, B>>(target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<F>) => void;
+    /**
+     * Decorates an IPC client method stub that can be invoked asynchronously on an IPC server.
+     */
+    IpcClientAsyncMethod<A, B>(converter: (value: A) => B): <K extends IpcMessageNames<TContract>, F extends (...args: IpcMessageParameters<TContract, K>) => IpcMessageReturnTypeConverter<TContract, K, A, B>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>) => void;
+
+    /**
+     * Decorates an IPC client method stub that can be invoked synchronously on an IPC server.
+     */
     IpcClientSyncMethod<K extends IpcMessageNames<TContract>, F extends IpcMessageSyncFunction<TContract, K>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>): void;
+    /**
+     * Decorates an IPC client method stub that can be invoked synchronously on an IPC server.
+     */
     IpcClientSyncMethod(): <K extends IpcMessageNames<TContract>, F extends IpcMessageSyncFunction<TContract, K>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>) => void;
+    /**
+     * Decorates an IPC client method stub that can be invoked synchronously on an IPC server.
+     */
     IpcClientSyncMethod<K extends IpcMessageNames<TContract>>(key: K): <F extends IpcMessageSyncFunction<TContract, K>>(target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<F>) => void;
+    /**
+     * Decorates an IPC client method stub that can be invoked synchronously on an IPC server.
+     */
     IpcClientSyncMethod<K extends IpcMessageNames<TContract>, A, B>(key: K, converter: (value: A) => B): <F extends (...args: IpcMessageParameters<TContract, K>) => IpcMessageSyncReturnTypeConverter<TContract, K, A, B>>(target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<F>) => void;
+    /**
+     * Decorates an IPC client method stub that can be invoked synchronously on an IPC server.
+     */
     IpcClientSyncMethod<A, B>(converter: (value: A) => B): <K extends IpcMessageNames<TContract>, F extends (...args: IpcMessageParameters<TContract, K>) => IpcMessageSyncReturnTypeConverter<TContract, K, A, B>>(target: object, propertyKey: K, descriptor: TypedPropertyDescriptor<F>) => void;
+
+    /**
+     * Decorates an IPC client event that will be raised asynchronously by an IPC server.
+     */
     IpcClientEvent<O extends object, K extends Extract<IpcEventNames<TEvents>, keyof O>>(target: NonConstructor<O>, propertyKey: MatchingKey<O, K, EventSource<TEvents[K]>>): void;
+    /**
+     * Decorates an IPC client event that will be raised asynchronously by an IPC server.
+     */
     IpcClientEvent<O extends object, K extends IpcEventNames<TEvents>>(target: NonConstructor<O>, propertyKey: K, descriptor?: TypedPropertyDescriptor<EventSource<TEvents[K]>>): void;
+    /**
+     * Decorates an IPC client event that will be raised asynchronously by an IPC server.
+     */
     IpcClientEvent(): <O extends object, K extends Extract<IpcEventNames<TEvents>, keyof O>>(target: NonConstructor<O>, propertyKey: MatchingKey<O, K, EventSource<TEvents[K]>>) => void;
+    /**
+     * Decorates an IPC client event that will be raised asynchronously by an IPC server.
+     */
     IpcClientEvent(): <O extends object, K extends IpcEventNames<TEvents>>(target: NonConstructor<O>, propertyKey: K, descriptor?: TypedPropertyDescriptor<EventSource<TEvents[K]>>) => void;
+    /**
+     * Decorates an IPC client event that will be raised asynchronously by an IPC server.
+     */
     IpcClientEvent<K extends IpcEventNames<TEvents>>(key: K): <O extends object>(target: NonConstructor<O>, propertyKey: string | symbol, descriptor?: TypedPropertyDescriptor<EventSource<TEvents[K]>>) => void;
 }
 
@@ -28,71 +84,118 @@ export namespace IpcClientDecorators {
     const weakMemberMap = new WeakMap<object, Map<string, Map<string, ["IpcClientMethod" | "IpcClientSyncMethod" | "IpcClientEvent", string | symbol]>>>();
     
     export function create<TContract extends IpcContractBase<TContract>, TEvents extends IpcEventContractBase<TEvents> = never>(channel: string): IpcClientDecorators<TContract, TEvents> {
-        const weakIpcAsyncClient = new WeakMap<object, IpcClient<any>>();
-        const weakIpcSyncClient = new WeakMap<object, IpcClientSync<any>>();
-        return { IpcClientClass, IpcClientMethod, IpcClientSyncMethod, IpcClientEvent };
+        const weakDisposed = new WeakSet<object>();
+        const weakIpcClientAsync = new WeakMap<object, IpcClient<any> | undefined>();
+        const weakIpcClientSync = new WeakMap<object, IpcClientSync<any> | undefined>();
 
+        return {
+            IpcClientClass,
+            IpcClientAsyncMethod,
+            IpcClientSyncMethod,
+            IpcClientEvent,
+        };
+
+        /**
+         * Decorates a class that should serve as an IPC client on an electron Renderer thread
+         */
         function IpcClientClass<C extends abstract new (...args: any[]) => Disposable>(target: C): C {
             @RendererOnly
             abstract class _ extends target {
-                #ipcEventObserver: IpcClientEventObserver<any> | undefined;
+                #disposables: Disposable | undefined;
+
                 constructor(...args: any[]) {
                     super(...args);
+
                     const messageNames = new Set<string>();
+                    let ipcClientAsync: IpcClient<any> | undefined;
+                    let ipcClientSync: IpcClientSync<any> | undefined;
+                    let ipcClientEventObserver: IpcClientEventObserver<any> | undefined;
                     let current = new.target.prototype;
-                    while (current && current !== Object.prototype) {
-                        const memberMap = weakMemberMap.get(current)?.get(channel);
-                        if (memberMap) {
-                            for (const [messageName, [kind, propertyKey]] of memberMap) {
-                                if (messageNames.has(messageName)) continue;
-                                messageNames.add(messageName);
-                                if (kind === "IpcClientEvent") {
-                                    let source = (this as any)[propertyKey] as EventSource<any> | undefined;
-                                    if (source === undefined) {
-                                        source = Event.create(this);
-                                        Object.defineProperty(this, propertyKey, {
-                                            value: source,
-                                            enumerable: false,
-                                            configurable: true,
-                                            writable: true
-                                        });
+                    try {
+                        while (current && current !== Object.prototype) {
+                            const memberMap = weakMemberMap.get(current)?.get(channel);
+                            if (memberMap) {
+                                for (const [messageName, [kind, propertyKey]] of memberMap) {
+                                    if (messageNames.has(messageName)) continue;
+                                    messageNames.add(messageName);
+                                    if (kind === "IpcClientEvent") {
+                                        let source = (this as any)[propertyKey] as EventSource<any> | undefined;
+                                        if (source === undefined) {
+                                            source = Event.create(this);
+                                            Object.defineProperty(this, propertyKey, {
+                                                value: source,
+                                                enumerable: false,
+                                                configurable: true,
+                                                writable: true
+                                            });
+                                        }
+                                        else if (!(source instanceof EventSource)) {
+                                            throw new TypeError(`Expected ${propertyKey.toString()} to be an EventSource or 'undefined'.`);
+                                        }
+                                        ipcClientEventObserver ||= new IpcClientEventObserver(channel);
+                                        ipcClientEventObserver.on(messageName, (...args) => source?.emit(...args));
                                     }
-                                    else if (!(source instanceof EventSource)) {
-                                        throw new TypeError(`Expected ${propertyKey.toString()} to be an EventSource or 'undefined'.`);
+                                    else if (kind === "IpcClientMethod") {
+                                        ipcClientAsync ||= new IpcClient<any>(channel);
                                     }
-                                    this.#ipcEventObserver ||= new IpcClientEventObserver(channel);
-                                    this.#ipcEventObserver.on(messageName, (...args) => source?.emit(...args));
-                                }
-                                else if (kind === "IpcClientMethod") {
-                                    if (!weakIpcAsyncClient.has(target)) weakIpcAsyncClient.set(this, new IpcClient<any>(channel));
-                                }
-                                else if (kind === "IpcClientSyncMethod") {
-                                    if (!weakIpcSyncClient.has(target)) weakIpcSyncClient.set(this, new IpcClientSync<any>(channel));
+                                    else if (kind === "IpcClientSyncMethod") {
+                                        ipcClientSync ||= new IpcClientSync<any>(channel);
+                                    }
                                 }
                             }
+                            current = Object.getPrototypeOf(current);
                         }
-                        current = Object.getPrototypeOf(current);
                     }
+                    catch (e) {
+                        const disposables = Disposable.from([
+                            ipcClientAsync,
+                            ipcClientSync,
+                            ipcClientEventObserver,
+                            Disposable.create(() => super[Disposable.dispose]())
+                        ]);
+                        Disposable.use(disposables, () => {
+                            weakDisposed.add(this);
+                            this.#disposables = undefined;
+                            throw e;
+                        });
+                    }
+
+                    weakIpcClientAsync.set(this, ipcClientAsync);
+                    weakIpcClientSync.set(this, ipcClientSync);
+                    this.#disposables = Disposable.from([
+                        ipcClientAsync,
+                        ipcClientSync,
+                        ipcClientEventObserver,
+                        Disposable.create(() => {
+                            weakDisposed.add(this);
+                            weakIpcClientAsync.delete(this);
+                            weakIpcClientSync.delete(this);
+                            super[Disposable.dispose]();
+                        })
+                    ]);
                 }
 
                 [Disposable.dispose]() {
-                    try {
-                        super[Disposable.dispose]();
+                    const disposables = this.#disposables;
+                    if (disposables) {
+                        this.#disposables = undefined;
+                        disposables[Disposable.dispose]();
                     }
-                    finally {
-                        this.#ipcEventObserver?.dispose();
-                        this.#ipcEventObserver = undefined;
-                        weakIpcAsyncClient.delete(this);
-                        weakIpcSyncClient.delete(this);
+                    else {
+                        super[Disposable.dispose]();
                     }
                 }
             }
+
             const name = /^ipcclient/i.test(target.name) ? target.name : `IpcClient${target.name.replace(/^(ipc|client)+/i, "")}`;
             Object.defineProperty(_, "name", { ...Object.getOwnPropertyDescriptor(_, "name"), value: name });
             return _;
         }
 
-        function IpcClientMethod(...args: [] | [string] | [(value: any) => any] | [string, (value: any) => any] | [object, string | symbol, TypedPropertyDescriptor<Function>?]): any {
+        /**
+         * Decorates an IPC client method stub that can be invoked asynchronously on an IPC server.
+         */
+        function IpcClientAsyncMethod(...args: [] | [string] | [(value: any) => any] | [string, (value: any) => any] | [object, string | symbol, TypedPropertyDescriptor<Function>?]): any {
             let key: string | undefined;
             let converter: ((value: any) => any) | undefined;
             if (isEmptyOverload(args)) return decorator;
@@ -111,9 +214,10 @@ export namespace IpcClientDecorators {
                     writable: true,
                     ...descriptor,
                     value: async function (this: object, ...args: any[]) {
-                        const ipcClient = weakIpcAsyncClient.get(this);
-                        if (!ipcClient) throw new TypeError("Method called on wrong target.");
-                        const result = await ipcClient.send(messageName, ...args);
+                        if (weakDisposed.has(this)) throw new ReferenceError("Object is disposed");
+                        const ipcClientAsync = weakIpcClientAsync.get(this);
+                        if (!ipcClientAsync) throw new TypeError("Method called on wrong target.");
+                        const result = await ipcClientAsync.send(messageName, ...args);
                         return converter && result !== undefined && result !== null ? converter(result) : result;
                     }
                 };
@@ -122,6 +226,9 @@ export namespace IpcClientDecorators {
             }
         }
 
+        /**
+         * Decorates an IPC client method stub that can be invoked synchronously on an IPC server.
+         */
         function IpcClientSyncMethod(...args: [] | [string] | [(value: any) => any] | [string, (value: any) => any] | [object, string | symbol, TypedPropertyDescriptor<Function>?]): any {
             let key: string | undefined;
             let converter: ((value: any) => any) | undefined;
@@ -141,9 +248,10 @@ export namespace IpcClientDecorators {
                     writable: true,
                     ...descriptor,
                     value: function (this: object, ...args: any[]) {
-                        const ipcClient = weakIpcSyncClient.get(this);
-                        if (!ipcClient) throw new TypeError("Method called on wrong target.");
-                        const result = ipcClient.sendSync(messageName, ...args);
+                        if (weakDisposed.has(this)) throw new ReferenceError("Object is disposed");
+                        const ipcClientSync = weakIpcClientSync.get(this);
+                        if (!ipcClientSync) throw new TypeError("Method called on wrong target.");
+                        const result = ipcClientSync.sendSync(messageName, ...args);
                         return converter && result !== undefined && result !== null ? converter(result) : result;
                     }
                 };
@@ -152,7 +260,10 @@ export namespace IpcClientDecorators {
             }
         }
 
-        function IpcClientEvent(...args: [] | [string] | [object, string | symbol]): any {
+        /**
+         * Decorates an IPC client event that will be raised asynchronously by an IPC server.
+         */
+        function IpcClientEvent(...args: [] | [string] | [object, string | symbol, PropertyDescriptor?]): any {
             let key: string | undefined;
             if (isEmptyOverload(args)) return decorator;
             if (isKeyOverload(args)) return [key] = args, decorator;

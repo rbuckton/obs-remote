@@ -1,16 +1,33 @@
-import _ObsWebSocket from "obs-websocket-js";
-import { EventEmitter } from "events";
-import { ObsWebSocketEventArgsList, ObsWebSocketEvents, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse } from "../common/protocol";
-import { IObsWebSocket } from "./obsWebSocket";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
 
-export class NullObsWebSocket extends EventEmitter implements IObsWebSocket {
-    static readonly instance = new NullObsWebSocket();
+import { EVENTS, TypedEventEmitter } from "../../core/common/events";
+import { ObsWebSocketEvents, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse } from "../common/protocol";
+import { IObsWebSocket } from "./iObsWebSocket";
+
+/**
+ * Provides a "null" {@link IObsWebSocket} for use when not connected to OBS.
+ */
+export class NullObsWebSocket extends TypedEventEmitter implements IObsWebSocket {
+    declare [EVENTS]: ObsWebSocketEvents;
+
+    static readonly instance: IObsWebSocket = new NullObsWebSocket();
 
     constructor() {
         super({ captureRejections: true });
     }
 
     get connected() {
+        return false;
+    }
+
+    get address() {
+        return "localhost:4444";
+    }
+
+    get secure() {
         return false;
     }
 
@@ -24,23 +41,4 @@ export class NullObsWebSocket extends EventEmitter implements IObsWebSocket {
     async send<K extends keyof ObsWebSocketRequests>(key: K, ...args: ObsWebSocketRequestArgs<K>): Promise<ObsWebSocketResponse<K>> {
         throw new Error("Not connected");
     }
-}
-
-export interface NullObsWebSocket {
-    addListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    addListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    on<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    on<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    once<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    once<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    removeListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    removeListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    off<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    off<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependOnceListener<K extends keyof ObsWebSocketEvents>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    prependOnceListener<K extends string | symbol>(type: K, listener: (...args: ObsWebSocketEventArgsList<K>) => void): this;
-    emit<K extends keyof ObsWebSocketEvents>(type: K, ...args: ObsWebSocketEventArgsList<K>): boolean;
-    emit<K extends string | symbol>(type: K, ...args: ObsWebSocketEventArgsList<K>): boolean;
 }

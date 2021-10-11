@@ -1,16 +1,22 @@
 module.exports = {
     preset: "ts-jest",
     testEnvironment: "node",
+    rootDir: "../",
     transform: {
         "^.+\\.tsx?": "ts-jest"
     },
     testPathIgnorePatterns: [
+        "/.vscode/",
+        "/.webpack/",
+        "/assets/",
+        "/config/",
+        "/dist/",
         "/node_modules/",
-        "/dist/"
+        "/out/",
     ],
     globals: {
         "ts-jest": {
-            tsConfig: "tsconfig.json",
+            tsconfig: require.resolve("../tsconfig.json"),
             compiler: require.resolve("typescript")
         }
     }

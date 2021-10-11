@@ -1,15 +1,23 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import React, { useContext, useEffect, useState } from "react";
-import { CircularProgress } from "@material-ui/core";
+import { CircularProgress, Grid } from "@mui/material";
 import {
     FiberSmartRecord as RecordIcon,
     Stop as StopRecordIcon,
     SaveAlt as SaveIcon
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 import { StreamStatusEventArgs } from "../../../obs/common/protocol";
 import { TileButton } from "../../components/tileButton";
-import { AppContext } from "../../utils/context";
+import { AppContext } from "../../utils/appContext";
 import { useAsyncEffect } from "../../hooks/useAsyncEffect";
 import { useAsyncCallback } from "../../hooks/useAsyncCallback";
+import { useEvent } from "../../hooks/useEvent";
+import { useEventCallback } from "../../hooks/useEventCallback";
+import { useAsyncEventCallback } from "../../hooks/useAsyncEventCallback";
 
 const enum ReplayBufferState {
     Unknown,
@@ -31,64 +39,46 @@ export const ReplayTiles = ({ }: ReplayTilesProps) => {
     const [state, setState] = useState(ReplayBufferState.Unknown);
     const [saving, setSaving] = useState(false);
     const unavailable = state === ReplayBufferState.Unavailable;
-    const starting = state === ReplayBufferState.StartPending || state === ReplayBufferState.Starting;
     const started = state === ReplayBufferState.Started;
     const stopping = state === ReplayBufferState.StopPending || state === ReplayBufferState.Stopping;
     const stopped = state === ReplayBufferState.Stopped;
 
     // behavior
-    const onReplayBufferStarting = () => setState(ReplayBufferState.Starting);
-    const onReplayBufferStarted = () => setState(ReplayBufferState.Started);
-    const onReplayBufferStopping = () => setState(ReplayBufferState.Stopping);
-    const onReplayBufferStopped = () => setState(ReplayBufferState.Stopped);
-    const onStreamStarted = () => setState(ReplayBufferState.Stopped);
-    const onStreamNotStarted = () => setState(ReplayBufferState.Unavailable);
 
-    const onStreamStatus = ({ "replay-buffer-active": active }: StreamStatusEventArgs) => {
+    const onStreamStatus = useEventCallback(({ "replay-buffer-active": active }: StreamStatusEventArgs) => {
         obs.off("StreamStatus", onStreamStatus);
         setState(active ? ReplayBufferState.Started : ReplayBufferState.Stopped);
-    };
+    });
 
-    const onRequestStartReplayBuffer = useAsyncCallback(async () => {
+    const onRequestStartReplayBuffer = useAsyncEventCallback(async () => {
         setState(ReplayBufferState.StartPending);
         await obs.send("StartReplayBuffer");
     });
 
-    const onRequestStopReplayBuffer = useAsyncCallback(async () => {
+    const onRequestStopReplayBuffer = useAsyncEventCallback(async () => {
         setState(ReplayBufferState.StopPending);
         await obs.send("StopReplayBuffer");
     });
 
-    const onSaveReplayBuffer = useAsyncCallback(async () => {
+    const onSaveReplayBuffer = useAsyncEventCallback(async token => {
         if (started && !saving) {
             setSaving(true);
             await obs.send("SaveReplayBuffer");
+
+            if (token.signaled) return;
             setSaving(false);
         }
     });
 
     // effects
-    useEffect(() => {
-        obs.on("ReplayStarting", onReplayBufferStarting);
-        obs.on("ReplayStarted", onReplayBufferStarted);
-        obs.on("ReplayStopping", onReplayBufferStopping);
-        obs.on("ReplayStopped", onReplayBufferStopped);
-        obs.on("StreamStarted", onStreamStarted);
-        obs.on("StreamStarting", onStreamNotStarted);
-        obs.on("StreamStopping", onStreamNotStarted);
-        obs.on("StreamStopped", onStreamNotStarted);
-        return () => {
-            obs.off("ReplayStarting", onReplayBufferStarting);
-            obs.off("ReplayStarted", onReplayBufferStarted);
-            obs.off("ReplayStopping", onReplayBufferStopping);
-            obs.off("ReplayStopped", onReplayBufferStopped);
-            obs.off("StreamStarted", onStreamStarted);
-            obs.off("StreamStarting", onStreamNotStarted);
-            obs.off("StreamStopping", onStreamNotStarted);
-            obs.off("StreamStopped", onStreamNotStarted);
-            obs.off("StreamStatus", onStreamStatus);
-        };
-    }, [obs]);
+    useEvent(obs, "ReplayStarting", () => setState(ReplayBufferState.Starting));
+    useEvent(obs, "ReplayStarted", () => setState(ReplayBufferState.Started));
+    useEvent(obs, "ReplayStopping", () => setState(ReplayBufferState.Stopping));
+    useEvent(obs, "ReplayStopped", () => setState(ReplayBufferState.Stopped));
+    useEvent(obs, "StreamStarted", () => setState(ReplayBufferState.Stopped));
+    useEvent(obs, "StreamStarting", () => setState(ReplayBufferState.Unavailable));
+    useEvent(obs, "StreamStopping", () => setState(ReplayBufferState.Unavailable));
+    useEvent(obs, "StreamStopped", () => setState(ReplayBufferState.Unavailable));
 
     useAsyncEffect(async (token) => {
         const status = await obs.send("GetStreamingStatus");
@@ -105,26 +95,30 @@ export const ReplayTiles = ({ }: ReplayTilesProps) => {
 
     // ui
     return <>
-        <TileButton
-            icon={
-                stopped || unavailable ? <RecordIcon /> :
-                started ? <StopRecordIcon /> :
-                <CircularProgress size={24} />
-            }
-            color={started ? "secondary" : "default"}
-            disabled={!stopped && !started}
-            onClick={
-                stopped ? onRequestStartReplayBuffer :
-                started ? onRequestStopReplayBuffer :
-                undefined
-            }>
-            {started || stopping ? "Stop Replay Buffer" : "Start Replay Buffer"}
-        </TileButton>
-        <TileButton
-            icon={saving ? <CircularProgress size={24} /> : <SaveIcon />}
-            disabled={!started || saving}
-            onClick={started && !saving ? onSaveReplayBuffer : undefined}>
-            Save Replay
-        </TileButton>
+        <Grid item>
+            <TileButton
+                icon={
+                    stopped || unavailable ? <RecordIcon /> :
+                    started ? <StopRecordIcon /> :
+                    <CircularProgress size={24} />
+                }
+                color={started ? "error" : "primary"}
+                disabled={!stopped && !started}
+                onClick={
+                    stopped ? onRequestStartReplayBuffer :
+                    started ? onRequestStopReplayBuffer :
+                    undefined
+                }>
+                {started || stopping ? "Stop Replay Buffer" : "Start Replay Buffer"}
+            </TileButton>
+        </Grid>
+        <Grid item>
+            <TileButton
+                icon={saving ? <CircularProgress size={24} /> : <SaveIcon />}
+                disabled={!started || saving}
+                onClick={started && !saving ? onSaveReplayBuffer : undefined}>
+                Save Replay
+            </TileButton>
+        </Grid>
     </>;
 };

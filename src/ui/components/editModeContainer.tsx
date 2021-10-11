@@ -1,40 +1,37 @@
-import React, { Children, createContext, ReactNode, useContext } from "react";
-import { Theme, WithStyles, createStyles, withStyles } from "@material-ui/core";
-import { AppContext } from "../utils/context";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
 
-export const EditModeContext = createContext<{ hidden?: boolean; editModeClassName?: string }>({
-    hidden: undefined,
-    editModeClassName: undefined
-});
-
-const styles = (theme: Theme) => createStyles({
-    editModeHidden: {
-        opacity: "50%"
-    }
-});
+import { ReactNode } from "react";
+import { useAppContext } from "../utils/appContext";
+import { EditContainerContext } from "../utils/editContainerContext";
 
 export interface EditModeContainerProps {
+    /**
+     * Indicates whether the nested component(s) should be hidden when not in edit mode.
+     */
     hidden?: boolean;
     children?: ReactNode;
 }
 
-export const EditModeContainer = withStyles(styles, { name: "EditModeContainer" })(({
-    classes,
-    hidden,
-    children: childrenProp
-}: EditModeContainerProps & WithStyles<typeof styles>) => {
-    const { editMode } = useContext(AppContext);
-    const children = Children.toArray(childrenProp);
-    return <>
-        {(!hidden || editMode) &&
-            <EditModeContext.Provider value={{ hidden, editModeClassName: classes.editModeHidden }}>
-                {children}
-            </EditModeContext.Provider>
-        }
-    </>;
-});
-
-export const useEditModeClassName = (hidden?: boolean) => {
-    const { hidden: hiddenContext, editModeClassName } = useContext(EditModeContext);
-    return (hidden ?? hiddenContext) ? editModeClassName : undefined;
+/**
+ * A container for a component that affects visibility based on the container's 
+ * `hidden` state and whether the UI is in edit mode.
+ */
+export const EditModeContainer = ({ hidden, children }: EditModeContainerProps) => {
+        // state
+    const { editMode } = useAppContext();
+    
+    // behavior
+    // <none>
+    
+    // effects
+    // <none>
+    
+    // ui
+    // If the container is not hidden, or the UI is in edit mode, show the container.
+    return !hidden || editMode ?
+        <EditContainerContext.Provider value={{ hidden }} children={children} /> :
+        null;
 };

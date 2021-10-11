@@ -1,92 +1,137 @@
-import React from "react";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { Brightness4 as DarkThemeIcon, Brightness7 as LightThemeIcon, Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon, Visibility as VisibilityIcon, VisibilityOff as VisibilityOffIcon } from "@mui/icons-material";
+import { Grid, IconButton } from "@mui/material";
+import { styled } from "@mui/system";
+import { useCallback } from "react";
 import { Redirect } from "react-router-dom";
-import { createStyles, Grid, IconButton, makeStyles, Theme, WithStyles, withStyles } from "@material-ui/core";
-import { Brightness4 as DarkThemeIcon, Brightness7 as LightThemeIcon, Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon, Visibility as VisibilityIcon, VisibilityOff as VisibilityOffIcon } from "@material-ui/icons";
 import { AppBar } from "./components/appBar";
 import { AudioSourceTiles } from "./dashboard/audioSources/audioSourceTiles";
 import { RecordingTiles } from "./dashboard/recording/recordingTiles";
 import { ReplayTiles } from "./dashboard/replay/replayTiles";
 import { SceneTiles } from "./dashboard/scenes/sceneTiles";
 import { StreamTile } from "./dashboard/stream/streamTile";
-import { useAppContext } from "./utils/context";
 import { DarkTheme, LightTheme } from "./themes";
+import { useAppContext } from "./utils/appContext";
+import { generateUtilityClasses } from "./utils/mui";
 
-const styles = (theme: Theme) => createStyles({
-    root: {
-        // flexGrow: 1,
+const classes = generateUtilityClasses("Dashboard", [
+    "root",
+    "outerGrid",
+    "leftGrid",
+    "rightGrid",
+    "buttonTilesGrid",
+    "sceneTilesGrid",
+    "audioSourceTilesGrid",
+]);
+
+const Root = styled("div")(({ theme }) => ({
+    [`&.${classes.root}`]: {
+        // backgroundColor: "red",
         padding: theme.spacing(0),
         flexGrow: 1,
         height: "calc(100vh - 64px)",
-        overflow: "hidden"
+        overflow: "hidden",
     },
-    outerGrid: {
-        height: "100%"
+    [`& .${classes.outerGrid}`]: {
+        // backgroundColor: "green"
+        height: "100%",
     },
-    leftGrid: {
+    [`& .${classes.leftGrid}`]: {
+        // backgroundColor: "blue",
         flexGrow: 1,
     },
-    buttonTilesGrid: {},
-    sceneTilesGrid: {
-        margin: "0px",
+    [`& .${classes.rightGrid}`]: {
+        // backgroundColor: "slateblue",
+        width: "unset",
+    },
+    [`& .${classes.buttonTilesGrid}`]: {
+        // backgroundColor: "yellow",
+        padding: theme.spacing(1)
+    },
+    [`& .${classes.sceneTilesGrid}`]: {
+        // backgroundColor: "orange",
         overflowX: "hidden",
         overflowY: "scroll",
-        borderTop: `1px solid ${theme.palette.divider}`
+        borderTop: `1px solid ${theme.palette.divider}`,
+        flexGrow: 1,
+        padding: theme.spacing(1),
     },
-    audioSourceTilesGrid: {
-        width: "calc(150px + 24px + var(--scrollbar-width, 16px))",
+    [`& .${classes.audioSourceTilesGrid}`]: {
+        // backgroundColor: "purple",
+        backgroundColor: theme.palette.mode === "dark" ?
+            "rgba(255, 255, 255, 0.05)" :
+            "rgba(0, 0, 0, 0.10)",
+        overflowX: "hidden",
         overflowY: "scroll",
-        backgroundColor: "rgba(0, 0, 0, 0.10)"
-    }
-});
+        padding: theme.spacing(1)
+    },
+}));
 
-export const Dashboard = 
-    (withStyles(styles, { name: "Dashboard" })
-    (({ classes }: WithStyles<typeof styles>) => {
-        // state
-        const {
-            theme,
-            fullscreen,
-            editMode,
-            connected,
-            setTheme,
-            setFullscreen,
-            setEditMode,
-        } = useAppContext();
+export const Dashboard = ({ }) => {
+    // state
+    const {
+        theme, setTheme,
+        fullscreen, setFullscreen,
+        editMode, setEditMode,
+        connected,
+    } = useAppContext();
 
-        // behavior
-        const toggleTheme = () => { setTheme(theme === LightTheme ? DarkTheme : LightTheme); };
-        const toggleFullscreen = () => { setFullscreen(!fullscreen); };
-        const toggleEditMode = () => { setEditMode(!editMode); };
+    // behavior
+    const toggleTheme = useCallback(() => {
+        setTheme(theme === LightTheme ? DarkTheme : LightTheme);
+    }, [theme]);
 
-        // ui
-        return !connected ? <Redirect to="/connect" /> : <>
+    const toggleFullscreen = useCallback(() => {
+        setFullscreen(!fullscreen);
+    }, [fullscreen]);
+
+    const toggleEditMode = useCallback(() => {
+        setEditMode(!editMode);
+    }, [editMode]);
+
+    // ui
+    return !connected ?
+        <Redirect to="/connect" /> :
+        <>
             <AppBar primary="Dashboard">
-                <IconButton edge="end" onClick={toggleTheme} title="Toggle light/dark theme">
-                    {theme === LightTheme ? <DarkThemeIcon /> : <LightThemeIcon />}
-                </IconButton>
-                <IconButton edge="end" onClick={toggleEditMode} title="Toggle Edit Mode">
+                <IconButton onClick={toggleEditMode} title="Toggle Edit Mode">
                     {editMode ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+                <IconButton onClick={toggleTheme} title="Toggle light/dark theme">
+                    {theme === LightTheme ? <DarkThemeIcon /> : <LightThemeIcon />}
                 </IconButton>
                 <IconButton edge="end" onClick={toggleFullscreen} title="Toggle Fullscreen">
                     {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
                 </IconButton>
             </AppBar>
-            <div className={classes.root}>
-                <Grid container wrap="nowrap" direction="row" justify="flex-start" className={classes.outerGrid}>
-                    <Grid item container wrap="nowrap" direction="column" justify="flex-start" alignItems="flex-start" className={classes.leftGrid}>
-                        <Grid item container wrap="wrap" direction="row" justify="flex-start" alignItems="flex-start" className={classes.buttonTilesGrid}>
-                            <StreamTile />
-                            <RecordingTiles />
-                            <ReplayTiles />
+            <Root className={classes.root}>
+                <Grid container className={classes.outerGrid} wrap="nowrap" direction="row" justifyContent="flex-start" alignItems="stretch">
+                    <Grid item container className={classes.leftGrid} wrap="nowrap" direction="column" justifyContent="flex-start" alignItems="stretch">
+                        <Grid item className={classes.buttonTilesGrid} justifyContent="stretch">
+                            <Grid container wrap="wrap" direction="row" justifyContent="flex-start" alignItems="flex-start" spacing={1}>
+                                <StreamTile />
+                                <RecordingTiles />
+                                <ReplayTiles />
+                            </Grid>
                         </Grid>
-                        <Grid item container spacing={3} alignItems="stretch" xs className={classes.sceneTilesGrid}>
-                            <SceneTiles />
+                        <Grid item className={classes.sceneTilesGrid} justifyContent="stretch">
+                            <Grid container wrap="wrap" direction="row" justifyContent="flex-start" alignItems="flex-start" alignContent="flex-start" spacing={1}>
+                                <SceneTiles />
+                            </Grid>
                         </Grid>
                     </Grid>
-                    <Grid item container className={classes.audioSourceTilesGrid} justify="flex-start" alignItems="flex-start" alignContent="flex-start">
-                        <AudioSourceTiles />
+                    <Grid item container className={classes.rightGrid} justifyContent="stretch">
+                        <Grid item className={classes.audioSourceTilesGrid} justifyContent="stretch">
+                            <Grid container direction="column" justifyContent="flex-start" alignItems="flex-start" alignContent="flex-start" spacing={1}>
+                                <AudioSourceTiles />
+                            </Grid>
+                        </Grid>
                     </Grid>
                 </Grid>
-            </div>
+            </Root>
         </>;
-    }));
+};

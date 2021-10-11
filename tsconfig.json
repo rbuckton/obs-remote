@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
         "target": "es2019",
-        "module": "commonjs",
-        "lib": ["es2019", "dom"],
-        "jsx": "react",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "lib": ["es2021", "dom"],
+        "jsx": "react-jsx",
         "outDir": "dist",
         "rootDir": "src",
+        "jsxImportSource": "react",
         "incremental": true,
         "composite": true,
         "strict": true,

@@ -1,3 +1,10 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { TypedEventObjectDescriptor } from "../../core/common/events";
+
 // Last version update: 4.9.1
 
 // #region Typedefs
@@ -659,20 +666,14 @@ export interface SpecialSources {
 
 // #region Events
 
-export type ObsWebSocketEventArgs<K extends string | symbol> = K extends keyof ObsWebSocketEvents ? ObsWebSocketEvents[K]["eventArgs"] : unknown;
-export type ObsWebSocketEventArgsList<K extends string | symbol> = K extends keyof ObsWebSocketEvents ? [ObsWebSocketEventArgs<K>] extends [void] ? [] : [args: ObsWebSocketEventArgs<K>] : any[];
-
-export interface ObsWebSocketEventDescriptor<Args> {
-    eventArgs: Args;
-}
-
 export interface ObsWebSocketEvents {
     // #region Client-side
 
-    ConnectionOpened: ObsWebSocketEventDescriptor<ConnectionOpenedEventArgs>;
-    ConnectionClosed: ObsWebSocketEventDescriptor<ConnectionClosedEventArgs>;
-    AuthenticationSuccess: ObsWebSocketEventDescriptor<AuthenticationSuccessEventArgs>;
-    AuthenticationFailure: ObsWebSocketEventDescriptor<AuthenticationFailureEventArgs>;
+    ConnectionOpened: TypedEventObjectDescriptor<ConnectionOpenedEventArgs>;
+    ConnectionClosed: TypedEventObjectDescriptor<ConnectionClosedEventArgs>;
+    AuthenticationSuccess: TypedEventObjectDescriptor<AuthenticationSuccessEventArgs>;
+    AuthenticationFailure: TypedEventObjectDescriptor<AuthenticationFailureEventArgs>;
+    error: TypedEventObjectDescriptor<unknown>;
 
     // #endregion Client-side
 
@@ -683,14 +684,14 @@ export interface ObsWebSocketEvents {
      *
      * @since 0.3
      */
-    SwitchScenes: ObsWebSocketEventDescriptor<SwitchScenesEventArgs>;
+    SwitchScenes: TypedEventObjectDescriptor<SwitchScenesEventArgs>;
 
     /**
      * Note: This event is not fired when the scenes are reordered.
      *
      * @since 0.3
      */
-    ScenesChanged: ObsWebSocketEventDescriptor<ScenesChangedEventArgs>;
+    ScenesChanged: TypedEventObjectDescriptor<ScenesChangedEventArgs>;
 
     // #endregion Scenes
 
@@ -701,14 +702,14 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.0.0
      */
-    SceneCollectionChanged: ObsWebSocketEventDescriptor<SceneCollectionChangedEventArgs>;
+    SceneCollectionChanged: TypedEventObjectDescriptor<SceneCollectionChangedEventArgs>;
 
     /**
      * Triggered when a scene collection is created, added, renamed, or removed.
      *
      * @since 4.0.0
      */
-    SceneCollectionListChanged: ObsWebSocketEventDescriptor<SceneCollectionListChangedEventArgs>;
+    SceneCollectionListChanged: TypedEventObjectDescriptor<SceneCollectionListChangedEventArgs>;
 
     // #endregion Scenes
 
@@ -719,42 +720,42 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.0.0
      */
-    SwitchTransition: ObsWebSocketEventDescriptor<SwitchTransitionEventArgs>;
+    SwitchTransition: TypedEventObjectDescriptor<SwitchTransitionEventArgs>;
 
     /**
      * The list of available transitions has been modified. Transitions have been added, removed, or renamed.
      *
      * @since 4.0.0
      */
-    TransitionListChanged: ObsWebSocketEventDescriptor<TransitionListChangedEventArgs>;
+    TransitionListChanged: TypedEventObjectDescriptor<TransitionListChangedEventArgs>;
 
     /**
      * The active transition duration has been changed.
      *
      * @since 4.0.0
      */
-    TransitionDurationChanged: ObsWebSocketEventDescriptor<TransitionDurationChangedEventArgs>;
+    TransitionDurationChanged: TypedEventObjectDescriptor<TransitionDurationChangedEventArgs>;
 
     /**
      * A transition (other than "cut") has begun.
      *
      * @since 4.0.0
      */
-    TransitionBegin: ObsWebSocketEventDescriptor<TransitionBeginEventArgs>;
+    TransitionBegin: TypedEventObjectDescriptor<TransitionBeginEventArgs>;
 
     /**
      * A transition (other than "cut") has ended. Note: The `from-scene` field is not available in TransitionEnd.
      *
      * @since 4.8.0
      */
-    TransitionEnd: ObsWebSocketEventDescriptor<TransitionEndEventArgs>;
+    TransitionEnd: TypedEventObjectDescriptor<TransitionEndEventArgs>;
 
     /**
      * A stinger transition has finished playing its video.
      *
      * @since 4.8.0
      */
-    TransitionVideoEnd: ObsWebSocketEventDescriptor<TransitionVideoEndEventArgs>;
+    TransitionVideoEnd: TypedEventObjectDescriptor<TransitionVideoEndEventArgs>;
 
     // #endregion Transitions
 
@@ -765,14 +766,14 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.0.0
      */
-    ProfileChanged: ObsWebSocketEventDescriptor<ProfileChangedEventArgs>;
+    ProfileChanged: TypedEventObjectDescriptor<ProfileChangedEventArgs>;
 
     /**
      * Triggered when a profile is created, added, renamed, or removed.
      *
      * @since 4.0.0
      */
-    ProfileListChanged: ObsWebSocketEventDescriptor<ProfileListChangedEventArgs>;
+    ProfileListChanged: TypedEventObjectDescriptor<ProfileListChangedEventArgs>;
 
     // #endregion Profiles
 
@@ -783,35 +784,35 @@ export interface ObsWebSocketEvents {
      *
      * @since 0.3
      */
-    StreamStarting: ObsWebSocketEventDescriptor<StreamStartingEventArgs>;
+    StreamStarting: TypedEventObjectDescriptor<StreamStartingEventArgs>;
 
     /**
      * Streaming started successfully.
      *
      * @since 0.3
      */
-    StreamStarted: ObsWebSocketEventDescriptor<StreamStartedEventArgs>;
+    StreamStarted: TypedEventObjectDescriptor<StreamStartedEventArgs>;
 
     /**
      * A request to stop streaming has been issued.
      *
      * @since 0.3
      */
-    StreamStopping: ObsWebSocketEventDescriptor<StreamStoppingEventArgs>;
+    StreamStopping: TypedEventObjectDescriptor<StreamStoppingEventArgs>;
 
     /**
      * Streaming stopped successfully.
      *
      * @since 0.3
      */
-    StreamStopped: ObsWebSocketEventDescriptor<StreamStoppedEventArgs>;
+    StreamStopped: TypedEventObjectDescriptor<StreamStoppedEventArgs>;
 
     /**
      * Emitted every 2 seconds when stream is active.
      *
      * @since 0.3
      */
-    StreamStatus: ObsWebSocketEventDescriptor<StreamStatusEventArgs>;
+    StreamStatus: TypedEventObjectDescriptor<StreamStatusEventArgs>;
 
     // #endregion Streaming
 
@@ -822,42 +823,42 @@ export interface ObsWebSocketEvents {
      *
      * @since 0.3
      */
-    RecordingStarting: ObsWebSocketEventDescriptor<RecordingStartingEventArgs>;
+    RecordingStarting: TypedEventObjectDescriptor<RecordingStartingEventArgs>;
 
     /**
      * Recording started successfully.
      *
      * @since 0.3
      */
-    RecordingStarted: ObsWebSocketEventDescriptor<RecordingStartedEventArgs>;
+    RecordingStarted: TypedEventObjectDescriptor<RecordingStartedEventArgs>;
 
     /**
      * A request to stop recording has been issued.
      *
      * @since 0.3
      */
-    RecordingStopping: ObsWebSocketEventDescriptor<RecordingStoppingEventArgs>;
+    RecordingStopping: TypedEventObjectDescriptor<RecordingStoppingEventArgs>;
 
     /**
      * Recording stopped successfully.
      *
      * @since 0.3
      */
-    RecordingStopped: ObsWebSocketEventDescriptor<RecordingStoppedEventArgs>;
+    RecordingStopped: TypedEventObjectDescriptor<RecordingStoppedEventArgs>;
 
     /**
      * Current recording paused.
      *
      * @since 4.7.0
      */
-    RecordingPaused: ObsWebSocketEventDescriptor<RecordingPausedEventArgs>;
+    RecordingPaused: TypedEventObjectDescriptor<RecordingPausedEventArgs>;
 
     /**
      * Current recording resumed.
      *
      * @since 4.7.0
      */
-    RecordingResumed: ObsWebSocketEventDescriptor<RecordingResumedEventArgs>;
+    RecordingResumed: TypedEventObjectDescriptor<RecordingResumedEventArgs>;
 
     // #endregion Recording
 
@@ -868,14 +869,14 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.9.1
      */
-    VirtualCamStarted: ObsWebSocketEventDescriptor<VirtualCamStartedEventArgs>;
+    VirtualCamStarted: TypedEventObjectDescriptor<VirtualCamStartedEventArgs>;
 
      /**
       * Virtual cam stopped successfully.
       *
       * @since 4.9.1
       */
-    VirtualCamStopped: ObsWebSocketEventDescriptor<VirtualCamStoppedEventArgs>;
+    VirtualCamStopped: TypedEventObjectDescriptor<VirtualCamStoppedEventArgs>;
 
     // #endregion Virtual Cam
 
@@ -886,28 +887,28 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.2.0
      */
-    ReplayStarting: ObsWebSocketEventDescriptor<ReplayStartingEventArgs>;
+    ReplayStarting: TypedEventObjectDescriptor<ReplayStartingEventArgs>;
 
     /**
      * Replay Buffer started successfully.
      *
      * @since 4.2.0
      */
-    ReplayStarted: ObsWebSocketEventDescriptor<ReplayStartedEventArgs>;
+    ReplayStarted: TypedEventObjectDescriptor<ReplayStartedEventArgs>;
 
     /**
      * A request to stop the replay buffer has been issued.
      *
      * @since 4.2.0
      */
-    ReplayStopping: ObsWebSocketEventDescriptor<ReplayStoppingEventArgs>;
+    ReplayStopping: TypedEventObjectDescriptor<ReplayStoppingEventArgs>;
 
     /**
      * Replay Buffer stopped successfully.
      *
      * @since 4.2.0
      */
-    ReplayStopped: ObsWebSocketEventDescriptor<ReplayStoppedEventArgs>;
+    ReplayStopped: TypedEventObjectDescriptor<ReplayStoppedEventArgs>;
 
     // #endregion Replay Buffer
 
@@ -918,7 +919,7 @@ export interface ObsWebSocketEvents {
      *
      * @since 0.3
      */
-    Exiting: ObsWebSocketEventDescriptor<ExitingEventArgs>;
+    Exiting: TypedEventObjectDescriptor<ExitingEventArgs>;
 
     // #endregion Other
 
@@ -930,14 +931,14 @@ export interface ObsWebSocketEvents {
      * @since 0.3
      * @deprecated since 4.9.0
      */
-    Heartbeat: ObsWebSocketEventDescriptor<HeartbeatEventArgs>;
+    Heartbeat: TypedEventObjectDescriptor<HeartbeatEventArgs>;
 
     /**
      * A custom broadcast message, sent by the server, requested by one of the websocket clients.
      *
      * @since 4.7.0
      */
-    BroadcastCustomMessage: ObsWebSocketEventDescriptor<BroadcastCustomMessageEventArgs>;
+    BroadcastCustomMessage: TypedEventObjectDescriptor<BroadcastCustomMessageEventArgs>;
 
     // #endregion General
 
@@ -948,91 +949,91 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.6.0
      */
-    SourceCreated: ObsWebSocketEventDescriptor<SourceCreatedEventArgs>;
+    SourceCreated: TypedEventObjectDescriptor<SourceCreatedEventArgs>;
 
     /**
      * A source has been destroyed/removed. A source can be an input, a scene or a transition.
      *
      * @since 4.6.0
      */
-    SourceDestroyed: ObsWebSocketEventDescriptor<SourceDestroyedEventArgs>;
+    SourceDestroyed: TypedEventObjectDescriptor<SourceDestroyedEventArgs>;
 
     /**
      * The volume of a source has changed.
      *
      * @since 4.6.0
      */
-    SourceVolumeChanged: ObsWebSocketEventDescriptor<SourceVolumeChangedEventArgs>;
+    SourceVolumeChanged: TypedEventObjectDescriptor<SourceVolumeChangedEventArgs>;
 
     /**
      * A source has been muted or unmuted.
      *
      * @since 4.6.0
      */
-    SourceMuteStateChanged: ObsWebSocketEventDescriptor<SourceMuteStateChangedEventArgs>;
+    SourceMuteStateChanged: TypedEventObjectDescriptor<SourceMuteStateChangedEventArgs>;
 
     /**
      * A source has removed audio.
      *
      * @since 4.9.0
      */
-    SourceAudioDeactivated: ObsWebSocketEventDescriptor<SourceAudioDeactivatedEventArgs>;
+    SourceAudioDeactivated: TypedEventObjectDescriptor<SourceAudioDeactivatedEventArgs>;
 
     /**
      * A source has added audio.
      *
      * @since 4.9.0
      */
-    SourceAudioActivated: ObsWebSocketEventDescriptor<SourceAudioActivatedEventArgs>;
+    SourceAudioActivated: TypedEventObjectDescriptor<SourceAudioActivatedEventArgs>;
 
     /**
      * The audio sync offset of a source has changed.
      *
      * @since 4.6.0
      */
-    SourceAudioSyncOffsetChanged: ObsWebSocketEventDescriptor<SourceAudioSyncOffsetChangedEventArgs>;
+    SourceAudioSyncOffsetChanged: TypedEventObjectDescriptor<SourceAudioSyncOffsetChangedEventArgs>;
 
     /**
      * Audio mixer routing changed on a source.
      *
      * @since 4.6.0
      */
-    SourceAudioMixersChanged: ObsWebSocketEventDescriptor<SourceAudioMixersChangedEventArgs>;
+    SourceAudioMixersChanged: TypedEventObjectDescriptor<SourceAudioMixersChangedEventArgs>;
 
     /**
      * A source has been renamed.
      *
      * @since 4.6.0
      */
-    SourceRenamed: ObsWebSocketEventDescriptor<SourceRenamedEventArgs>;
+    SourceRenamed: TypedEventObjectDescriptor<SourceRenamedEventArgs>;
 
     /**
      * A filter was added to a source.
      *
      * @since 4.6.0
      */
-    SourceFilterAdded: ObsWebSocketEventDescriptor<SourceFilterAddedEventArgs>;
+    SourceFilterAdded: TypedEventObjectDescriptor<SourceFilterAddedEventArgs>;
 
     /**
      * A filter was removed from a source.
      *
      * @since 4.6.0
      */
-    SourceFilterRemoved: ObsWebSocketEventDescriptor<SourceFilterRemovedEventArgs>;
+    SourceFilterRemoved: TypedEventObjectDescriptor<SourceFilterRemovedEventArgs>;
 
     /**
      * The visibility/enabled state of a filter changed.
      *
      * @since 4.7.0
      */
-    SourceFilterVisibilityChanged: ObsWebSocketEventDescriptor<SourceFilterVisibilityChangedEventArgs>;
+    SourceFilterVisibilityChanged: TypedEventObjectDescriptor<SourceFilterVisibilityChangedEventArgs>;
 
     /**
      * Filters in a source have been reordered.
      *
      * @since 4.6.0
      */
-    SourceFiltersReordered: ObsWebSocketEventDescriptor<SourceFiltersReorderedEventArgs>;
+    SourceFiltersReordered: TypedEventObjectDescriptor<SourceFiltersReorderedEventArgs>;
 
     // #endregion Sources
 
@@ -1043,56 +1044,56 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.9.0
      */
-    MediaPlaying: ObsWebSocketEventDescriptor<MediaPlayingEventArgs>;
+    MediaPlaying: TypedEventObjectDescriptor<MediaPlayingEventArgs>;
 
     /**
      * Note: This event is only emitted when something actively controls the media/VLC source. In other words, the source will never emit this on its own naturally.
      *
      * @since 4.9.0
      */
-    MediaPaused: ObsWebSocketEventDescriptor<MediaPausedEventArgs>;
+    MediaPaused: TypedEventObjectDescriptor<MediaPausedEventArgs>;
 
     /**
      * Note: This event is only emitted when something actively controls the media/VLC source. In other words, the source will never emit this on its own naturally.
      *
      * @since 4.9.0
      */
-    MediaRestarted: ObsWebSocketEventDescriptor<MediaRestartedEventArgs>;
+    MediaRestarted: TypedEventObjectDescriptor<MediaRestartedEventArgs>;
 
     /**
      * Note: This event is only emitted when something actively controls the media/VLC source. In other words, the source will never emit this on its own naturally.
      *
      * @since 4.9.0
      */
-    MediaStopped: ObsWebSocketEventDescriptor<MediaStoppedEventArgs>;
+    MediaStopped: TypedEventObjectDescriptor<MediaStoppedEventArgs>;
 
     /**
      * Note: This event is only emitted when something actively controls the media/VLC source. In other words, the source will never emit this on its own naturally.
      *
      * @since 4.9.0
      */
-    MediaNext: ObsWebSocketEventDescriptor<MediaNextEventArgs>;
+    MediaNext: TypedEventObjectDescriptor<MediaNextEventArgs>;
 
     /**
      * Note: This event is only emitted when something actively controls the media/VLC source. In other words, the source will never emit this on its own naturally.
      *
      * @since 4.9.0
      */
-    MediaPrevious: ObsWebSocketEventDescriptor<MediaPreviousEventArgs>;
+    MediaPrevious: TypedEventObjectDescriptor<MediaPreviousEventArgs>;
 
     /**
      * Note: These events are emitted by the OBS sources themselves. For example when the media file starts playing. The behavior depends on the type of media source being used.
      *
      * @since 4.9.0
      */
-    MediaStarted: ObsWebSocketEventDescriptor<MediaStartedEventArgs>;
+    MediaStarted: TypedEventObjectDescriptor<MediaStartedEventArgs>;
 
     /**
      * Note: These events are emitted by the OBS sources themselves. For example when the media file ends. The behavior depends on the type of media source being used.
      *
      * @since 4.9.0
      */
-    MediaEnded: ObsWebSocketEventDescriptor<MediaEndedEventArgs>;
+    MediaEnded: TypedEventObjectDescriptor<MediaEndedEventArgs>;
 
     // #endregion Media
 
@@ -1103,56 +1104,56 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.0.0
      */
-    SourceOrderChanged: ObsWebSocketEventDescriptor<SourceOrderChangedEventArgs>;
+    SourceOrderChanged: TypedEventObjectDescriptor<SourceOrderChangedEventArgs>;
 
     /**
      * A scene item has been added to a scene.
      *
      * @since 4.0.0
      */
-    SceneItemAdded: ObsWebSocketEventDescriptor<SceneItemAddedEventArgs>;
+    SceneItemAdded: TypedEventObjectDescriptor<SceneItemAddedEventArgs>;
 
     /**
      * A scene item has been removed from a scene.
      *
      * @since 4.0.0
      */
-    SceneItemRemoved: ObsWebSocketEventDescriptor<SceneItemRemovedEventArgs>;
+    SceneItemRemoved: TypedEventObjectDescriptor<SceneItemRemovedEventArgs>;
 
     /**
      * A scene item's visibility has been toggled.
      *
      * @since 4.0.0
      */
-    SceneItemVisibilityChanged: ObsWebSocketEventDescriptor<SceneItemVisibilityChangedEventArgs>;
+    SceneItemVisibilityChanged: TypedEventObjectDescriptor<SceneItemVisibilityChangedEventArgs>;
 
     /**
      * A scene item's locked status has been toggled.
      *
      * @since 4.8.0
      */
-    SceneItemLockChanged: ObsWebSocketEventDescriptor<SceneItemLockChangedEventArgs>;
+    SceneItemLockChanged: TypedEventObjectDescriptor<SceneItemLockChangedEventArgs>;
 
     /**
      * A scene item's transform has been changed.
      *
      * @since 4.6.0
      */
-    SceneItemTransformChanged: ObsWebSocketEventDescriptor<SceneItemTransformChangedEventArgs>;
+    SceneItemTransformChanged: TypedEventObjectDescriptor<SceneItemTransformChangedEventArgs>;
 
     /**
      * A scene item is selected.
      *
      * @since 4.6.0
      */
-    SceneItemSelected: ObsWebSocketEventDescriptor<SceneItemSelectedEventArgs>;
+    SceneItemSelected: TypedEventObjectDescriptor<SceneItemSelectedEventArgs>;
 
     /**
      * A scene item is deselected.
      *
      * @since 4.6.0
      */
-    SceneItemDeselected: ObsWebSocketEventDescriptor<SceneItemDeselectedEventArgs>;
+    SceneItemDeselected: TypedEventObjectDescriptor<SceneItemDeselectedEventArgs>;
 
     // #endregion Scene Items
 
@@ -1163,14 +1164,14 @@ export interface ObsWebSocketEvents {
      *
      * @since 4.1.0
      */
-    PreviewSceneChanged: ObsWebSocketEventDescriptor<PreviewSceneChangedEventArgs>;
+    PreviewSceneChanged: TypedEventObjectDescriptor<PreviewSceneChangedEventArgs>;
 
     /**
      * Studio Mode has been enabled or disabled.
      *
      * @since 4.1.0
      */
-    StudioModeSwitched: ObsWebSocketEventDescriptor<StudioModeSwitchedEventArgs>;
+    StudioModeSwitched: TypedEventObjectDescriptor<StudioModeSwitchedEventArgs>;
 
     // #endregion Studio Mode
 }
@@ -2967,7 +2968,7 @@ export type BatchRequest<K extends keyof ObsWebSocketRequests> =
  */
 export type ExecuteBatchRequest = {
     /** Array of requests to perform. Executed in order. */
-    requests: BatchRequest<any>[];
+    requests: BatchRequest<keyof ObsWebSocketRequests>[];
     /** Stop processing batch requests if one returns a failure. */
     abortOnFail?: boolean;
 };
@@ -2977,7 +2978,7 @@ export type ExecuteBatchRequest = {
  */
 export type ExecuteBatchResponse = {
     /** Batch requests results, ordered sequentially. */
-    results: BatchResponse<any>[];
+    results: BatchResponse<keyof ObsWebSocketRequests>[];
 };
 
 /**
@@ -4105,7 +4106,7 @@ export type ListSceneCollectionsResponse = {
 /**
  * @since 4.9.0
  */
-export type GetSceneItemListResponse = {
+export type GetSceneItemListRequest = {
     /** Name of the scene to get the list of scene items from. Defaults to the current scene if not specified. */
     sceneName?: string;
 };
@@ -4113,7 +4114,7 @@ export type GetSceneItemListResponse = {
 /**
  * @since 4.9.0
  */
-export type GetSceneItemListRequest = {
+export type GetSceneItemListResponse = {
     /** Name of the requested (or current) scene */
     sceneName: string;
     /** Array of scene items */

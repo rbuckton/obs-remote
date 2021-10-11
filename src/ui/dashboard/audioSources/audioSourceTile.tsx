@@ -1,27 +1,31 @@
-import React, { useContext, useEffect, useState } from "react";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import {
     Mic as MicIcon,
     MicNone as MicSilentIcon,
     MicOff as MicOffIcon,
-    VolumeUp as AudioIcon,
     VolumeMute as AudioSilentIcon,
-    VolumeOff as AudioOffIcon
-} from "@material-ui/icons";
-import { SourceMuteStateChangedEventArgs } from "../../../obs/common/protocol";
-import { TileButton } from "../../components/tileButton";
-import { AppContext } from "../../utils/context";
-import { AudioSource } from "./audioSource";
-import { useAsyncEffect } from "../../hooks/useAsyncEffect";
-import { useAsyncCallback } from "../../hooks/useAsyncCallback";
-import { CircularProgress, createStyles, makeStyles } from "@material-ui/core";
-import { EditModeContainer } from "../../components/editModeContainer";
+    VolumeOff as AudioOffIcon,
+    VolumeUp as AudioIcon
+} from "@mui/icons-material";
+import { CircularProgress, Grid } from "@mui/material";
+import { useContext, useState } from "react";
+import { Source } from "../../../obs/common/protocol";
+import { getSourceHiddenCustomProperty, setSourceHiddenCustomProperty } from "../../../obs/renderer/extensions";
 import { EditModeBadge } from "../../components/editModeBadge";
+import { EditModeContainer } from "../../components/editModeContainer";
 import { EditModeContent } from "../../components/editModeContent";
-import { getSourceHiddenInEditMode, setSourceHiddenInEditMode } from "../../../obs/renderer/extensions";
-import { useObsWebSocketEvent } from "../../hooks/useObsWebSocketEvent";
+import { TileButton } from "../../components/tileButton";
+import { useAsyncEffect } from "../../hooks/useAsyncEffect";
+import { useAsyncEventCallback } from "../../hooks/useAsyncEventCallback";
+import { useEvent } from "../../hooks/useEvent";
+import { AppContext } from "../../utils/appContext";
 
 export interface AudioSourceTileProps {
-    source: AudioSource;
+    source: Source;
 }
 
 export const AudioSourceTile = ({
@@ -35,17 +39,21 @@ export const AudioSourceTile = ({
     const [pending, setPending] = useState(false);
 
     // behavior
-    const onClick = useAsyncCallback(async () => {
+    const onClick = useAsyncEventCallback(async token => {
         if (editMode) {
             setHidden(!hidden);
             setPending(true);
             try {
                 const { sourceSettings } = await obs.send("GetSourceSettings", { sourceName: source.name, sourceType: source.typeId });
-                setSourceHiddenInEditMode(sourceSettings, !hidden);
+                if (token.signaled) return;
+
+                setSourceHiddenCustomProperty(sourceSettings, !hidden);
                 await obs.send("SetSourceSettings", { sourceName: source.name, sourceType: source.typeId, sourceSettings });
             }
             finally {
-                setPending(false);
+                if (!token.signaled) {
+                    setPending(false);
+                }
             }
         }
         else {
@@ -54,37 +62,41 @@ export const AudioSourceTile = ({
     });
 
     // effects
-    useObsWebSocketEvent("SourceMuteStateChanged", ({ sourceName, muted }: SourceMuteStateChangedEventArgs) => {
+    useEvent(obs, "SourceMuteStateChanged", ({ sourceName, muted }) => {
         if (sourceName !== source.name) return;
         setIsMuted(muted);
     }, [source]);
 
-    useAsyncEffect(async (token) => {
+    useAsyncEffect(async token => {
         const { volume, muted } = await obs.send("GetVolume", { source: source.name, useDecibel: false });
         if (token.signaled) return;
         setVolume(volume);
         setIsMuted(muted);
 
         const { sourceSettings } = await obs.send("GetSourceSettings", { sourceName: source.name });
-        setHidden(getSourceHiddenInEditMode(sourceSettings));
+        if (token.signaled) return;
+        setHidden(getSourceHiddenCustomProperty(sourceSettings));
     }, [obs, source]);
 
     // ui
     return hidden === undefined ? <></> : <>
         <EditModeContainer hidden={hidden}>
-            <EditModeContent component={TileButton}
-                icon={
-                    <EditModeBadge>{
-                        pending ? <CircularProgress size={24} /> :
-                        source.sourceType.typeId === "wasapi_input_capture" ?
-                            isMuted ? <MicOffIcon /> : volume === 0 ? <MicSilentIcon /> : <MicIcon /> :
-                            isMuted ? <AudioOffIcon /> : volume === 0 ? <AudioSilentIcon /> : <AudioIcon />
-                    }</EditModeBadge>
-                } 
-                color={isMuted && !hidden ? "secondary" : "default"}
-                onClick={onClick}
-                title={source.name}>
-                {source.name}
+            <EditModeContent component={Grid} item>
+                <TileButton
+                    icon={
+                        <EditModeBadge>{
+                            pending ? <CircularProgress size={24} /> :
+                            source.typeId === "wasapi_input_capture" ?
+                                isMuted ? <MicOffIcon /> : volume === 0 ? <MicSilentIcon /> : <MicIcon /> :
+                                isMuted ? <AudioOffIcon /> : volume === 0 ? <AudioSilentIcon /> : <AudioIcon />
+                        }</EditModeBadge>
+                    } 
+                    color={hidden ? undefined : isMuted ? "warning" : "primary"}
+                    onClick={onClick}
+                    disabled={pending}
+                    title={source.name}>
+                    {source.name}
+                </TileButton>
             </EditModeContent>
         </EditModeContainer>
     </>;

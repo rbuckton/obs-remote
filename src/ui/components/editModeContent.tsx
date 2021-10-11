@@ -1,29 +1,43 @@
-import React, { forwardRef, ReactNode } from "react";
-import { OverrideProps } from "@material-ui/core/OverridableComponent";
-import { OverridableComponent } from "@material-ui/core/OverridableComponent";
-import { useEditModeClassName } from "./editModeContainer";
-import clsx from "clsx";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
 
-export interface EditModeContentTypeMap<P = {}, D extends React.ElementType = "span"> {
+import type { OverrideProps } from "@mui/types";
+import clsx from "clsx";
+import { ElementType, forwardRef, ReactNode } from "react";
+import { OverridableFunctionComponent } from "../../core/renderer/types";
+import { useEditContainerContext } from "../utils/editContainerContext";
+import { globalClasses } from "./globalStyles";
+
+export interface EditModeContentTypeMap<P = {}, D extends ElementType = "span"> {
     props: P & {
-        hidden?: boolean;
         children?: ReactNode;
     };
     defaultComponent: D;
-    classKey: never;
 }
 
 export type EditModeContentProps<
-    D extends React.ElementType = EditModeContentTypeMap['defaultComponent'],
+    D extends ElementType = EditModeContentTypeMap['defaultComponent'],
     P = {}
 > = OverrideProps<EditModeContentTypeMap<P, D>, D>;
 
 export const EditModeContent = forwardRef(({
-    component: ComponentProp = "span",
-    hidden,
+    component: Component = "span",
     className,
     ...props
-}: EditModeContentProps & { component?: React.ElementType }, ref) => {
-    const editModeClassName = useEditModeClassName(hidden);
-    return <ComponentProp className={clsx([editModeClassName, className])} {...props} />
-}) as OverridableComponent<EditModeContentTypeMap>;
+}: EditModeContentProps & { component?: ElementType }, ref) => {
+    const { hidden } = useEditContainerContext();
+    return <Component 
+        ref={ref}
+        className={clsx(
+            hidden ? globalClasses.editModeHidden : undefined,
+            className
+        )}
+        {...props} />
+
+}) as OverridableFunctionComponent<EditModeContentTypeMap>;
+
+if (process.env.NODE_ENV !== "production") {
+    EditModeContent.displayName = "EditModeContent";
+}

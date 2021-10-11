@@ -1,13 +1,19 @@
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
 import { Disposable } from "@esfx/disposable";
 import { Event } from "@esfx/events";
 import { IpcClientDecorators } from "../../ipc/renderer";
-import { IPreferencesEventContract, IPreferencesService, IPreferencesSnapshot, IPreferencesSyncContract, PreferenceKeys } from "../common/preferencesService";
+import { IPreferencesIpcEventContract, IPreferencesSnapshot, IPreferencesIpcContract } from "../common/ipc";
+import { IPreferencesService, PreferenceKeys } from "../common/preferencesService";
 
-const { IpcClientClass, IpcClientSyncMethod, IpcClientEvent } = IpcClientDecorators.create<IPreferencesSyncContract, IPreferencesEventContract>("preferences");
+const { IpcClientClass, IpcClientSyncMethod, IpcClientEvent } = IpcClientDecorators.create<IPreferencesIpcContract, IPreferencesIpcEventContract>("preferences");
 
 @IpcClientClass
 export class RendererPreferencesService implements IPreferencesService {
-    private _preferences: IPreferencesSnapshot | undefined;
+    #preferences: IPreferencesSnapshot | undefined;
 
     @IpcClientEvent("didChange")
     private _didChange = Event.create<(this: this, key: PreferenceKeys) => void>(this);
@@ -15,19 +21,27 @@ export class RendererPreferencesService implements IPreferencesService {
     readonly onDidChange = this._didChange.event;
     
     constructor() {
-        this.onDidChange(() => { this._preferences = undefined; });
+        this.onDidChange(() => { this.#preferences = undefined; });
     }
 
     get theme() {
-        return this._getPreferences().theme;
+        return this.#getPreferences().theme;
     }
 
     set theme(value) {
         this._setPreferenceSync("theme", value);
     }
 
+    get fullscreen() {
+        return this.#getPreferences().fullscreen;
+    }
+
+    set fullscreen(value) {
+        this._setPreferenceSync("fullscreen", value);
+    }
+
     get hostname() {
-        return this._getPreferences().hostname;
+        return this.#getPreferences().hostname;
     }
 
     set hostname(value) {
@@ -35,7 +49,7 @@ export class RendererPreferencesService implements IPreferencesService {
     }
 
     get port() {
-        return this._getPreferences().port;
+        return this.#getPreferences().port;
     }
 
     set port(value) {
@@ -43,7 +57,7 @@ export class RendererPreferencesService implements IPreferencesService {
     }
 
     get authKey() {
-        return this._getPreferences().authKey;
+        return this.#getPreferences().authKey;
     }
 
     set authKey(value) {
@@ -51,7 +65,7 @@ export class RendererPreferencesService implements IPreferencesService {
     }
 
     get autoConnect() {
-        return this._getPreferences().autoConnect;
+        return this.#getPreferences().autoConnect;
     }
 
     set autoConnect(value) {
@@ -73,8 +87,8 @@ export class RendererPreferencesService implements IPreferencesService {
         throw new Error("Method not implemented.");
     }
 
-    private _getPreferences() {
-        return this._preferences ||= this._getPreferencesSync();
+    #getPreferences() {
+        return this.#preferences ||= this._getPreferencesSync();
     }
 
     [Disposable.dispose]() {

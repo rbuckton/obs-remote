@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from "react";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { ExitToApp as DisconnectIcon } from "@mui/icons-material";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ListItem, ListItemIcon, ListItemText } from "@mui/material";
+import { useState } from "react";
 import { useHistory } from "react-router-dom";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ListItem, ListItemIcon, ListItemText } from "@material-ui/core";
-import { ExitToApp as DisconnectIcon } from "@material-ui/icons";
-import { useAppContext } from "../utils/context";
 import { NullObsWebSocket } from "../../obs/renderer";
-import { useObsWebSocketEvent } from "../hooks/useObsWebSocketEvent";
+import { useEvent } from "../hooks/useEvent";
+import { useAppContext } from "../utils/appContext";
 
 const enum ConnectionState {
     Connected,
@@ -48,9 +53,9 @@ export const ConnectionStateItem = () => {
     };
 
     // effects
-    useObsWebSocketEvent("ConnectionOpened", onConnected);
-    useObsWebSocketEvent("ConnectionClosed", onDisconnected);
-    useObsWebSocketEvent("Exiting", onDisconnected);
+    useEvent(obs, "ConnectionOpened", onConnected);
+    useEvent(obs, "ConnectionClosed", onDisconnected);
+    useEvent(obs, "Exiting", onDisconnected);
 
     // ui
     return <>
