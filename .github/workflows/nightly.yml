@@ -1,0 +1,34 @@
+name: nightly
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: publish-nightly
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: use node v16
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: install dependencies
+      run: npm ci
+    - name: configure nightly
+      run: npm run configure-nightly
+    - name: run tests
+      run: npm run test
+    - name: make package
+      run: npm run make
+    - name: deploy nightly
+      uses: marvinpinto/action-automatic-releases@v1.2.1
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        automatic_release_tag: latest
+        prerelease: true
+        title: Nightly
+        files: |
+          out/make/squirrel.windows/x64/*.exe
+          out/make/squirrel.windows/x64/RELEASES
