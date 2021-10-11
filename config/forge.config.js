@@ -12,35 +12,39 @@
 
 /** @type {import("@electron-forge/shared-types").ForgeConfig} */
 module.exports = {
-    packagerConfig: {},
+    packagerConfig: {
+        appCopyright: "Copyright © 2021 Ron Buckton",
+        extraResource: [
+            require.resolve("../assets/screenshot.jpg")
+        ]
+    },
     makers: [
         {
             name: "@electron-forge/maker-squirrel",
             config: /** @type {MakerOptions<import("@electron-forge/maker-squirrel").default>} */({
-                name: "obs_remote"
             })
         },
-        {
-            name: "@electron-forge/maker-appx",
-            config: /** @type {MakerOptions<import("@electron-forge/maker-appx").default>} */({
-            })
-        },
-        {
-            name: "@electron-forge/maker-zip",
-            platforms: ["darwin"],
-            config: /** @type {MakerOptions<import("@electron-forge/maker-zip").default>} */({
-            })
-        },
-        {
-            name: "@electron-forge/maker-deb",
-            config: /** @type {MakerOptions<import("@electron-forge/maker-deb").default>} */({
-            })
-        },
-        {
-            name: "@electron-forge/maker-rpm",
-            config: /** @type {MakerOptions<import("@electron-forge/maker-rpm").default>} */({
-            })
-        }
+        // {
+        //     name: "@electron-forge/maker-appx",
+        //     config: /** @type {MakerOptions<import("@electron-forge/maker-appx").default>} */({
+        //     })
+        // },
+        // {
+        //     name: "@electron-forge/maker-zip",
+        //     platforms: ["darwin"],
+        //     config: /** @type {MakerOptions<import("@electron-forge/maker-zip").default>} */({
+        //     })
+        // },
+        // {
+        //     name: "@electron-forge/maker-deb",
+        //     config: /** @type {MakerOptions<import("@electron-forge/maker-deb").default>} */({
+        //     })
+        // },
+        // {
+        //     name: "@electron-forge/maker-rpm",
+        //     config: /** @type {MakerOptions<import("@electron-forge/maker-rpm").default>} */({
+        //     })
+        // }
     ],
     plugins: [
         ["@electron-forge/plugin-webpack", /** @type {import("@electron-forge/plugin-webpack/dist/Config").WebpackPluginConfig} */({

@@ -52,8 +52,20 @@ export class MainAppInfoService implements IAppInfoService, Disposable {
 
     @IpcServerMethod
     async getFakeScreenshotDataUri(): Promise<string> {
-        const screenshotPath = path.resolve(app.getAppPath(), "assets/screenshot.jpg");
-        const data = await fs.promises.readFile(screenshotPath);
+        let data: Buffer;
+        try {
+            const screenshotResourcePath = path.resolve(process.resourcesPath, "screenshot.jpg");
+            data = await fs.promises.readFile(screenshotResourcePath);
+        }
+        catch (e) {
+            try {
+                const screenshotAssetPath = path.resolve(app.getAppPath(), "assets/screenshot.jpg");
+                data = await fs.promises.readFile(screenshotAssetPath);
+            }
+            catch {
+                throw e;
+            }
+        }
         return `data:image/jpeg;base64,${data.toString("base64")}`;
     }
 
