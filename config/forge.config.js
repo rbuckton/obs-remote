@@ -29,22 +29,27 @@ module.exports = {
         //     config: /** @type {MakerOptions<import("@electron-forge/maker-appx").default>} */({
         //     })
         // },
+        {
+            name: "@electron-forge/maker-zip",
+            platforms: ["darwin"],
+            config: /** @type {MakerOptions<import("@electron-forge/maker-zip").default>} */({
+            })
+        },
         // {
-        //     name: "@electron-forge/maker-zip",
-        //     platforms: ["darwin"],
-        //     config: /** @type {MakerOptions<import("@electron-forge/maker-zip").default>} */({
+        //     name: "@electron-forge/maker-pkg",
+        //     config: /** @type {MakerOptions<import("@electron-forge/maker-pkg").default>} */({
         //     })
         // },
-        // {
-        //     name: "@electron-forge/maker-deb",
-        //     config: /** @type {MakerOptions<import("@electron-forge/maker-deb").default>} */({
-        //     })
-        // },
-        // {
-        //     name: "@electron-forge/maker-rpm",
-        //     config: /** @type {MakerOptions<import("@electron-forge/maker-rpm").default>} */({
-        //     })
-        // }
+        {
+            name: "@electron-forge/maker-deb",
+            config: /** @type {MakerOptions<import("@electron-forge/maker-deb").default>} */({
+            })
+        },
+        {
+            name: "@electron-forge/maker-rpm",
+            config: /** @type {MakerOptions<import("@electron-forge/maker-rpm").default>} */({
+            })
+        }
     ],
     plugins: [
         ["@electron-forge/plugin-webpack", /** @type {import("@electron-forge/plugin-webpack/dist/Config").WebpackPluginConfig} */({

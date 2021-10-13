@@ -6,7 +6,7 @@ on:
   repository_dispatch:
     types: publish-nightly
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -22,13 +22,55 @@ jobs:
       run: npm run test
     - name: make package
       run: npm run make
+    - name: upload windows build artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: artifacts-windows
+        path: |
+          out/make/squirrel.windows/x64/*.exe
+          out/make/squirrel.windows/x64/RELEASES
+        if-no-files-found: error
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: use node v16
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: install dependencies
+      run: npm ci
+    - name: configure nightly
+      run: npm run configure-nightly
+    - name: run tests
+      run: npm run test
+    - name: make package
+      run: npm run make
+    - name: print out directory structure
+      run: ls -R
+    - name: upload linux build artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: artifacts-linux
+        path: |
+          out/make/*/x64/*.*
+        if-no-files-found: error
+  package-nightly:
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux]
+    steps:
+    - name: download build artifacts
+      uses: actions/download-artifact@v2
+    - name: print publish directory structure
+      run: ls -R
     - name: deploy nightly
       uses: marvinpinto/action-automatic-releases@v1.2.1
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        automatic_release_tag: latest
+        automatic_release_tag: latest-test
         prerelease: true
         title: nightly
         files: |
-          out/make/squirrel.windows/x64/*.exe
-          out/make/squirrel.windows/x64/RELEASES
+          artifacts-windows/**/*.*
+          artifacts-windows/**/RELEASES
+          artifacts-linux/**/*.*
