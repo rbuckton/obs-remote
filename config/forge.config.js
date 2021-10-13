@@ -21,7 +21,7 @@ module.exports = {
     makers: [
         {
             name: "@electron-forge/maker-squirrel",
-            config: /** @type {MakerOptions<import("@electron-forge/maker-squirrel").default>} */({
+            config: /** @type {MakerOptions<import("@electron-forge/maker-squirrel").default>} */({                
             })
         },
         // {
