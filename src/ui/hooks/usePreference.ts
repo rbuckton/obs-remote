@@ -3,9 +3,10 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  *-----------------------------------------------------------------------------------------*/
 
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { IPreferencesService, PreferenceKeys } from "../../preferences/common/preferencesService";
 import { useEvent } from "./useEvent";
+import { useEventCallback } from "./useEventCallback";
 import { useService } from "./useService";
 
 /**
@@ -53,14 +54,14 @@ export function usePreferenceEditor<K extends PreferenceKeys>(key: K): Preferenc
     const [tempValue, setTempValue] = useState(prefValue);
 
     // behavior
-    const commit = useCallback((...args: [value: IPreferencesService[K]] | []) => {
+    const commit = useEventCallback((...args: [value: IPreferencesService[K]] | []) => {
         const commitValue = args.length === 0 ? tempValue : args[0];
         setPrefValue(commitValue);
-    }, [tempValue]);
+    }, [key]);
 
-    const revert = useCallback(() => {
+    const revert = useEventCallback(() => {
         setTempValue(prefValue);
-    }, [prefValue]);
+    }, [key]);
 
     // effects
     // <none>

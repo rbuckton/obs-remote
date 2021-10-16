@@ -8,24 +8,50 @@ import { Event } from "@esfx/events";
 import Store from "electron-store";
 import { IpcServerDecorators } from "../../ipc/main";
 import { ThemeKind } from "../../themes/themeKind";
-import { IPreferencesIpcEventContract, IPreferencesSnapshot, IPreferencesIpcContract } from "../common/ipc";
+import { IPreferencesIpcContract, IPreferencesIpcEventContract, IPreferencesSnapshot } from "../common/ipc";
 import { IPreferencesService, PreferenceKeys } from "../common/preferencesService";
+import { IMainKeyVaultService } from "./keyVaultService";
 
 const { IpcServerClass, IpcServerSyncMethod, IpcServerEvent } = IpcServerDecorators.create<IPreferencesIpcContract, IPreferencesIpcEventContract>("preferences");
+
+interface PreferencesStore {
+    theme: ThemeKind,
+    hostname: string,
+    port: number,
+    /** @deprecated */ authKey?: string,
+    rememberAuthKey: boolean,
+    autoConnect: boolean,
+    fullscreen: boolean
+}
+
+const DEFAULT_PREFERENCES: Omit<IPreferencesSnapshot, "authKey"> = {
+    theme: ThemeKind.Light,
+    hostname: "",
+    port: 4444,
+    rememberAuthKey: true,
+    autoConnect: false,
+    fullscreen: false,
+};
+
+const PREFERENCE_KEYS = Object.getOwnPropertyNames(DEFAULT_PREFERENCES) as (keyof typeof DEFAULT_PREFERENCES)[];
 
 @IpcServerClass
 export class MainPreferencesService implements IPreferencesService {
     #disposed = false;
-    #store = new Store({
-        defaults: {
-            theme: ThemeKind.Light,
-            hostname: "",
-            port: 4444,
-            authKey: "",
-            autoConnect: false,
-            fullscreen: false,
+    #store = new Store<PreferencesStore>({
+        defaults: { ...DEFAULT_PREFERENCES },
+        migrations: {
+            ">=0.0.0-0": (store) => {
+                const authKey = store.get("authKey");
+                if (authKey !== undefined) {
+                    if (authKey) {
+                        this._keyVaultService.authKey = authKey;
+                    }
+                    store.delete("authKey");
+                }
+            }
         },
-        watch: true
+        watch: true,
     });
     #disposables: Disposable | undefined;
 
@@ -33,10 +59,18 @@ export class MainPreferencesService implements IPreferencesService {
     private _didChange = Event.create<(key: PreferenceKeys) => void>(this);
     readonly onDidChange = this._didChange.event;
 
-    constructor() {
+    constructor(
+        @IMainKeyVaultService private _keyVaultService: IMainKeyVaultService
+    ) {
         const disposables: Disposable[] = [];
         try {
-            for (const key of ["theme", "hostname", "port", "authKey", "autoConnect", "fullscreen"] as const) {
+            const onAuthKeyChanged = () => { this._didChange.emit("authKey"); };
+            this._keyVaultService.onDidChange.addListener(onAuthKeyChanged);
+            disposables.push(Disposable.create(() => {
+                this._keyVaultService.onDidChange.removeListener(onAuthKeyChanged);
+            }));
+
+            for (const key of PREFERENCE_KEYS) {
                 const unsubscribe = this.#store.onDidChange(key, () => {
                     this._didChange.emit(key);
                 });
@@ -90,14 +124,32 @@ export class MainPreferencesService implements IPreferencesService {
         this.#store.set("port", value);
     }
 
+    get rememberAuthKey() {
+        if (this.#disposed) throw new ReferenceError("Object is disposed");
+        return this.#store.get("rememberAuthKey");
+    }
+
+    set rememberAuthKey(value) {
+        if (this.#disposed) throw new ReferenceError("Object is disposed");
+        this.#store.set("rememberAuthKey", value);
+        if (!value) {
+            this._keyVaultService.authKey = undefined;
+        }
+    }
+
     get authKey() {
         if (this.#disposed) throw new ReferenceError("Object is disposed");
-        return this.#store.get("authKey");
+        return this._keyVaultService.authKey ?? "";
     }
 
     set authKey(value) {
         if (this.#disposed) throw new ReferenceError("Object is disposed");
-        this.#store.set("authKey", value);
+        if (!value) {
+            this._keyVaultService.authKey = undefined;
+        }
+        else if (this.rememberAuthKey) {
+            this._keyVaultService.authKey = value;
+        }
     }
 
     get autoConnect() {
@@ -123,6 +175,7 @@ export class MainPreferencesService implements IPreferencesService {
             theme: this.theme,
             hostname: this.hostname,
             port: this.port,
+            rememberAuthKey: this.rememberAuthKey,
             authKey: this.authKey,
             autoConnect: this.autoConnect,
             fullscreen: this.fullscreen,
@@ -136,10 +189,15 @@ export class MainPreferencesService implements IPreferencesService {
             case "theme":
             case "hostname":
             case "port":
-            case "authKey":
             case "autoConnect":
             case "fullscreen":
                 this.#store.set(key, value);
+                break;
+            case "rememberAuthKey":
+                this.rememberAuthKey = !!value;
+                break;
+            case "authKey":
+                this.authKey = `${value}`;
                 break;
         }
     }
