@@ -82,6 +82,7 @@ export const Connect = ({
     const app = useService(IAppInfoService);
     const [hostname, setHostname, commitHostname] = usePreferenceEditor("hostname");
     const [port, setPort, commitPort] = usePreferenceEditor("port");
+    const [rememberAuthKey, setRememberAuthKey, commitRememberAuthKey] = usePreferenceEditor("rememberAuthKey");
     const [authKey, setAuthKey, commitAuthKey] = usePreferenceEditor("authKey");
     const [autoConnect, setAutoConnect, commitAutoConnect] = usePreferenceEditor("autoConnect");
     const [state, setState] = useState(() => auto ? ConnectionState.AutoConnectRequested : ConnectionState.Disconnected);
@@ -109,6 +110,7 @@ export const Connect = ({
         switch (event.target.name) {
             case "hostname": return setHostname(event.target.value);
             case "port": return setPort(event.target.valueAsNumber);
+            case "rememberAuthKey": return setRememberAuthKey(event.target.checked);
             case "authKey": return setAuthKey(event.target.value);
             case "autoConnect": return setAutoConnect(event.target.checked);
         }
@@ -136,6 +138,7 @@ export const Connect = ({
 
             commitHostname();
             commitPort();
+            commitRememberAuthKey();
             commitAuthKey();
             commitAutoConnect();
             setConnection(obs);
@@ -170,6 +173,7 @@ export const Connect = ({
 
             commitHostname();
             commitPort();
+            commitRememberAuthKey();
             commitAuthKey();
             commitAutoConnect(false);
             setConnection(obs);
@@ -270,6 +274,20 @@ export const Connect = ({
                                     disabled={state >= ConnectionState.AutoConnectRequested}
                                     value={authKey}
                                     onChange={onChange}
+                                    />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <FormControlLabel
+                                    control={<Checkbox
+                                        id="rememberAuthKey"
+                                        name="rememberAuthKey"
+                                        color="primary"
+                                        checked={rememberAuthKey}
+                                        onChange={onChange}
+                                        disabled={state >= ConnectionState.AutoConnectRequested}
+                                        />}
+                                    label="Remember Auth Key"
+                                    disabled={state >= ConnectionState.AutoConnectRequested}
                                     />
                             </Grid>
                             <Grid item xs={12}>

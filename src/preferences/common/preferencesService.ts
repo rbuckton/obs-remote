@@ -28,6 +28,9 @@ export interface IPreferences {
     get port(): number;
     set port(value: number);
 
+    get rememberAuthKey(): boolean;
+    set rememberAuthKey(value: boolean);
+
     get authKey(): string;
     set authKey(value: string);
 

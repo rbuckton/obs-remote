@@ -17,6 +17,7 @@ import { MainPowerManagementService } from "./powerManagement/main/powerManageme
 import { IAppInfoService } from "./app/common/appInfoService";
 import { MainAppInfoService } from "./app/main/appInfoService";
 import { IMainElectronForgeService } from "./app/main/electronForgeService";
+import { IMainKeyVaultService, MainKeyVaultService } from "./preferences/main/keyVaultService";
 
 // injected by @electron-forge/plugin-webpack
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
@@ -32,11 +33,15 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
  */
 async function main() {
     try {
+        const keyVaultService = new MainKeyVaultService();
+        await keyVaultService.waitForReady();
+
         const serviceProvider = new ServiceCollection()
             .addInstance(IMainElectronForgeService, {
                 MAIN_WINDOW_WEBPACK_ENTRY: MAIN_WINDOW_WEBPACK_ENTRY,
                 MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
             })
+            .addInstance(IMainKeyVaultService, keyVaultService)
             .addClass(IPreferencesService, MainPreferencesService)
             .addClass(IPowerManagementService, MainPowerManagementService)
             .addClass(IAppInfoService, MainAppInfoService)

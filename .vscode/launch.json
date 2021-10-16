@@ -1,0 +1,60 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Electron Main",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron-forge-vscode-nix",
+            "windows": {
+              "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron-forge-vscode-win.cmd"
+            },
+            "runtimeArgs": [
+                "--remote-debugging-port=9222"
+            ],
+            "cwd": "${workspaceFolder}",
+            "cascadeTerminateToConfigurations": [
+                "Attach to Render Process"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "Debug",
+                "order": 2
+            },
+        },
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Attach to Render Process",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}/.webpack/renderer/main_window",
+            "timeout": 120000,
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack://obs-remote/./*": "${workspaceFolder}/*",
+                "webpack:///./~/*": "${workspaceFolder}/node_modules/*",
+                "webpack://?:*/*": "${workspaceFolder}/*"
+            },
+            "restart": true,
+            "presentation": {
+                "hidden": false,
+                "group": "Debug",
+                "order": 3
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug",
+            "configurations": [
+                "Electron Main",
+                "Attach to Render Process"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "Debug",
+                "order": 1
+            }
+        }
+    ]
+}

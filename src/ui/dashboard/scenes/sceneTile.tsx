@@ -265,7 +265,7 @@ export const SceneTile = ({
                     <Card
                         className={current ? classes.cardCurrent : classes.card}
                         variant={"outlined"}
-                        elevation={3}>
+                        elevation={0 /*3*/}>
                         <CardActionArea onClick={onClick} disabled={pending}>
                             <CardHeader
                                 className={classes.header}

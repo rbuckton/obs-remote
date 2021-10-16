@@ -56,11 +56,20 @@ export class RendererPreferencesService implements IPreferencesService {
         this._setPreferenceSync("port", value);
     }
 
+    get rememberAuthKey() {
+        return this.#getPreferences().rememberAuthKey;
+    }
+
+    set rememberAuthKey(value) {
+        this._setPreferenceSync("rememberAuthKey", value);
+    }
+
     get authKey() {
         return this.#getPreferences().authKey;
     }
 
     set authKey(value) {
+        debugger;
         this._setPreferenceSync("authKey", value);
     }
 
