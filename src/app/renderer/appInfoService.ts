@@ -6,7 +6,7 @@
 import { Disposable } from "@esfx/disposable";
 import { Version } from "../../core/common/version";
 import { IpcClientDecorators } from "../../ipc/renderer";
-import { IAppInfoService } from "../common/appInfoService";
+import { IAppService } from "../common/appService";
 import { IAppInfoServiceIpcContract } from "../common/ipc";
 
 const { IpcClientClass, IpcClientAsyncMethod: IpcClientMethod, IpcClientSyncMethod } = IpcClientDecorators.create<IAppInfoServiceIpcContract, {}>("appInfo");
@@ -15,7 +15,7 @@ const { IpcClientClass, IpcClientAsyncMethod: IpcClientMethod, IpcClientSyncMeth
  * Provides access to information about the electron application from the Renderer thread.
  */
 @IpcClientClass
-export class RendererInfoAppService implements IAppInfoService {
+export class RendererInfoAppService implements IAppService {
     private _version: Version | undefined;
 
     /**

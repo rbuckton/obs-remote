@@ -5,7 +5,7 @@
 
 import { BrowserWindow } from "electron";
 import { ServiceIdentifier } from "service-composition";
-import { IMainElectronForgeService } from "../../app/main/electronForgeService";
+import { IMainElectronForgeWebpackInjectionService } from "../../app/main/electronForgeWebpackInjectionService";
 import { MainOnly } from "../../core/main/decorators";
 import { IMainSessionService } from "../../session/main/sessionService";
 
@@ -30,7 +30,7 @@ export class MainWindowManagerService implements IMainWindowManagerService {
 
     constructor(
         @IMainSessionService private _sessionService: IMainSessionService,
-        @IMainElectronForgeService private _electronForgeService: IMainElectronForgeService,
+        @IMainElectronForgeWebpackInjectionService private _electronForgeService: IMainElectronForgeWebpackInjectionService,
     ) {
         this._mainWindow = new BrowserWindow({
             show: false,

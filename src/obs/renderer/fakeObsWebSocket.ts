@@ -4,7 +4,7 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { delay } from "@esfx/async-delay";
-import { IAppInfoService } from "../../app/common/appInfoService";
+import { IAppService } from "../../app/common/appService";
 import { EVENTS, TypedEventEmitter } from "../../core/common/events";
 import { BatchResponse, GetVideoInfoResponse, OBSStats, ObsWebSocketEvents, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse, Scene, SceneItem, Source, SourceType, SourceTypeCapabilities, SpecialSources } from "../common/protocol";
 import { IObsWebSocket } from "./iObsWebSocket";
@@ -72,7 +72,7 @@ export class FakeObsWebSocket extends TypedEventEmitter implements IObsWebSocket
     }
 }
 
-export function createDefaultFakeObsWebSocket(app: IAppInfoService) {
+export function createDefaultFakeObsWebSocket(app: IAppService) {
     interface TransitionType {
         readonly name: string;
         readonly supportsDuration: boolean;
@@ -1474,7 +1474,7 @@ function createSourceTypes(callback: (builder: SourceTypeBuilder) => void): read
 
 let imageUri: string | undefined;
 
-export async function getFakeScreenshotUri(app: IAppInfoService) {
+export async function getFakeScreenshotUri(app: IAppService) {
     if (!imageUri) {
         try {
             imageUri = await app.getFakeScreenshotDataUri();

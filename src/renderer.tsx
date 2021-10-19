@@ -9,7 +9,7 @@ import { Button, CssBaseline, Divider, List, StyledEngineProvider, SwipeableDraw
 import * as ReactDOM from "react-dom";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 import { IServiceProvider, ServiceCollection } from "service-composition";
-import { IAppInfoService } from "./app/common/appInfoService";
+import { IAppService } from "./app/common/appService";
 import { RendererInfoAppService } from "./app/renderer/appInfoService";
 import { IPowerManagementService } from "./powerManagement/common/powerManagement";
 import { RendererPowerManagementService } from "./powerManagement/renderer/powerManagement";
@@ -94,7 +94,7 @@ async function main() {
         const serviceProvider = new ServiceCollection()
             .addClass(IPreferencesService, RendererPreferencesService)
             .addClass(IPowerManagementService, RendererPowerManagementService)
-            .addClass(IAppInfoService, RendererInfoAppService)
+            .addClass(IAppService, RendererInfoAppService)
             .createContainer();
 
         appRoot = <AppWithServices serviceProvider={serviceProvider} />;

@@ -21,7 +21,7 @@ import {
 import { styled } from "@mui/system";
 import React, { useCallback, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router-dom";
-import { IAppInfoService } from "../app/common/appInfoService";
+import { IAppService } from "../app/common/appService";
 import { NullObsWebSocket, ObsWebSocket } from "../obs/renderer";
 import { createDefaultFakeObsWebSocket } from "../obs/renderer/fakeObsWebSocket";
 import { AppBar } from "./components/appBar";
@@ -79,7 +79,7 @@ export const Connect = ({
         fullscreen, setFullscreen,
         setConnection
     } = useAppContext();
-    const app = useService(IAppInfoService);
+    const app = useService(IAppService);
     const [hostname, setHostname, commitHostname] = usePreferenceEditor("hostname");
     const [port, setPort, commitPort] = usePreferenceEditor("port");
     const [rememberAuthKey, setRememberAuthKey, commitRememberAuthKey] = usePreferenceEditor("rememberAuthKey");

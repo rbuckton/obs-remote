@@ -9,12 +9,12 @@ import { Version } from "../../core/common/version";
 /**
  * Provides access to information about the electron application.
  */
-export const IAppInfoService = ServiceIdentifier.create<IAppInfoService>("IAppInfoService");
+export const IAppService = ServiceIdentifier.create<IAppService>("IAppService");
 
 /**
  * Provides access to information about the electron application.
  */
-export interface IAppInfoService {
+export interface IAppService {
     get version(): Version;
     getAppPath(): string;
     getFreeMemory(): number;

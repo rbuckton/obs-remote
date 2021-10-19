@@ -3,76 +3,91 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  *-----------------------------------------------------------------------------------------*/
 
-import { optional, ServiceIdentifier } from "service-composition";
-import { MainOnly } from "../../core/main/decorators";
-import { IMainDevToolsService } from "../../dev/main/devToolsService";
-import { IPowerManagementService } from "../../powerManagement/common/powerManagement";
-import { IPreferencesService } from "../../preferences/common/preferencesService";
+import { Disposable } from "@esfx/disposable";
+import { app } from "electron";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import { IpcServerDecorators } from "../../ipc/main";
+import { IAppService } from "../common/appService";
+import { IAppInfoServiceIpcContract } from "../common/ipc";
+import { IMainElectronForgeWebpackInjectionService } from "./electronForgeWebpackInjectionService";
+import { Version } from "../../core/common/version";
 import { IMainWindowManagerService } from "../../windowManager/main/windowManagerService";
-import { IAppInfoService } from "../common/appInfoService";
-import { IMainElectronForgeService } from "./electronForgeService";
+
+const { IpcServerClass, IpcServerMethod, IpcServerSyncMethod } = IpcServerDecorators.create<IAppInfoServiceIpcContract, {}>("appInfo");
 
 /**
- * Application component for the electron Main thread. Starts the application and
- * shows the main window.
+ * Provides access to information about the electron application from the Main thread.
  */
-export const IMainAppService = ServiceIdentifier.create<IMainAppService>("IMainAppService");
+@IpcServerClass
+export class MainAppService implements IAppService, Disposable {
+    private _version: Version;
 
-/**
- * Application component for the electron Main thread. Starts the application and
- * shows the main window.
- */
-export interface IMainAppService {
-    /**
-     * Runs the application. Resolves only once the main window has closed.
-     */
-    run(): Promise<void>;
-}
-
-/**
- * Application component for the electron Main thread. Starts the application and
- * shows the main window.
- */
-@MainOnly
-export class MainAppService implements IMainAppService {
-    // Other IPC servers need to be instantiated before we start the render thread
-    @IPreferencesService declare private _preferencesService: IPreferencesService;
-    @IPowerManagementService declare private _powerManagementService: IPowerManagementService;
+    @IMainWindowManagerService _mainWindowService!: IMainWindowManagerService;
 
     constructor(
-        @IMainWindowManagerService private _windowManagerService: IMainWindowManagerService,
-        @IMainElectronForgeService private _electronForgeService: IMainElectronForgeService,
-        @IAppInfoService private _appInfoService: IAppInfoService,
-        @optional(IMainDevToolsService) private _devToolsService?: IMainDevToolsService | undefined,
+        @IMainElectronForgeWebpackInjectionService private _electronForgeService: IMainElectronForgeWebpackInjectionService
     ) {
+        this._version = Version.parse(app.getVersion());
     }
 
     /**
-     * Runs the application. Resolves only once the main window has closed.
+     * Gets the application installation path
      */
-    async run(): Promise<void> {
-        const mainWindow = this._windowManagerService.mainWindow;
-        const session = mainWindow.webContents.session;
-        switch (this._appInfoService.getMode()) {
-            case "development":
-                await this._devToolsService?.install(session);
-                break;
-            case "production":
-                session.webRequest.onHeadersReceived((details, callback) => {
-                    if (!details.responseHeaders?.["content-security-policy"] &&
-                        !details.responseHeaders?.["Content-Security-Policy"]) {
-                        details.responseHeaders ||= {};
-                        details.responseHeaders["Content-Security-Policy"] = ["script-src 'self'; connect-src 'self' ws: wss:"];
-                    }
-                    callback(details);
-                });
-                break;        
+    @IpcServerSyncMethod
+    getAppPath() {
+        return app.getAppPath();
+    }
+
+    @IpcServerSyncMethod
+    getFreeMemory() {
+        return os.freemem();
+    }
+
+    @IpcServerSyncMethod
+    getMode() {
+        return /^http:/i.test(this._electronForgeService.MAIN_WINDOW_WEBPACK_ENTRY) ? "development" : "production";
+    }
+
+    @IpcServerMethod
+    async getFakeScreenshotDataUri(): Promise<string> {
+        let data: Buffer;
+        try {
+            const screenshotResourcePath = path.resolve(process.resourcesPath, "screenshot.jpg");
+            data = await fs.promises.readFile(screenshotResourcePath);
         }
+        catch (e) {
+            try {
+                const screenshotAssetPath = path.resolve(app.getAppPath(), "assets/screenshot.jpg");
+                data = await fs.promises.readFile(screenshotAssetPath);
+            }
+            catch {
+                throw e;
+            }
+        }
+        return `data:image/jpeg;base64,${data.toString("base64")}`;
+    }
 
-        mainWindow.on("ready-to-show", () => mainWindow.show());
-        await mainWindow.webContents.loadURL(this._electronForgeService.MAIN_WINDOW_WEBPACK_ENTRY);
+    get version() {
+        return this._version;
+    }
 
-        // run() should suspend until the main window is closed.
-        await new Promise(resolve => mainWindow.on("closed", resolve));
+    @IpcServerSyncMethod("getVersion")
+    private _getVersion() {
+        return this._version.toString();
+    }
+
+    @IpcServerMethod()
+    async requestFullscreen() {
+        await this._mainWindowService.mainWindow.webContents.executeJavaScript(`
+            document.documentElement.requestFullscreen({ navigationUI: "hide" })
+        `, /*userGesture*/ true);
+    }
+
+    /**
+     * Cleans up resources
+     */
+    [Disposable.dispose]() {
     }
 }

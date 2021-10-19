@@ -4,7 +4,7 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { useCallback, useEffect, useRef } from "react";
-import { IAppInfoService } from "../../app/common/appInfoService";
+import { IAppService } from "../../app/common/appService";
 import { IPowerManagementService } from "../../powerManagement/common/powerManagement";
 import { useAsyncEffect } from "../hooks/useAsyncEffect";
 import { useService } from "../hooks/useService";
@@ -20,7 +20,7 @@ export const FullscreenMode = ({ }: FullscreenModeProps) => {
     // state
     const { fullscreen, setFullscreen } = useAppContext();
     const powerManager = useService(IPowerManagementService);
-    const appInfo = useService(IAppInfoService);
+    const appInfo = useService(IAppService);
     const blockerRef = useRef<number>();
 
     // behavior

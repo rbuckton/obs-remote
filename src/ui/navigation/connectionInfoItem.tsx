@@ -4,13 +4,13 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { ListSubheader, Typography } from "@mui/material";
-import { IAppInfoService } from "../../app/common/appInfoService";
+import { IAppService } from "../../app/common/appService";
 import { useService } from "../hooks/useService";
 import { useAppContext } from "../utils/appContext";
 
 export const ConnectionInfoItem = () => {
     const { connected, obs, version: obsVersion } = useAppContext();
-    const { version: appVersion } = useService(IAppInfoService);
+    const { version: appVersion } = useService(IAppService);
 
     return (
         <ListSubheader sx={{ bgcolor: "info.main", color: "info.contrastText", pt: "8px", pb: "8px", display: "block" }}>
