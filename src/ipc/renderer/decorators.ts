@@ -5,9 +5,9 @@
 
 import { Disposable } from "@esfx/disposable";
 import { Event, EventSource } from "@esfx/events";
-import { MatchingKey, NonConstructor } from "service-composition/dist/types";
 import { RendererOnly } from "../../core/renderer/decorators";
 import { IpcContractBase, IpcEventContractBase, IpcEventNames, IpcMessageFunction, IpcMessageNames, IpcMessageParameters, IpcMessageReturnTypeConverter, IpcMessageSyncFunction, IpcMessageSyncReturnTypeConverter } from "../common/ipc";
+import { MatchingKey, NonConstructor } from "../../core/common/types";
 import { IpcClient, IpcClientEventObserver, IpcClientSync } from "./client";
 
 export interface IpcClientDecorators<TContract extends IpcContractBase<TContract>, TEvents extends IpcEventContractBase<TEvents>> {

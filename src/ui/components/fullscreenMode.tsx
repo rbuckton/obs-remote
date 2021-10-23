@@ -4,8 +4,8 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { useCallback, useEffect, useRef } from "react";
-import { IAppService } from "../../app/common/appService";
-import { IPowerManagementService } from "../../powerManagement/common/powerManagement";
+import { IAppService } from "../../services/app/common/appService";
+import { IPowerManagementService } from "../../services/powerManagement/common/powerManagementService";
 import { useAsyncEffect } from "../hooks/useAsyncEffect";
 import { useService } from "../hooks/useService";
 import { useAppContext } from "../utils/appContext";

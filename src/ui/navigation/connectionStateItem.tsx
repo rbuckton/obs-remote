@@ -7,7 +7,7 @@ import { ExitToApp as DisconnectIcon } from "@mui/icons-material";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import { useState } from "react";
 import { useHistory } from "react-router-dom";
-import { NullObsWebSocket } from "../../obs/renderer";
+import { NullObsWebSocket } from "../../obs/renderer/nullObsWebSocket";
 import { useEvent } from "../hooks/useEvent";
 import { useAppContext } from "../utils/appContext";
 

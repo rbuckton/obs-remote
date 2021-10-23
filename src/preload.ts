@@ -4,7 +4,7 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { contextBridge, ipcRenderer } from "electron";
-import type { ContextifiedIpcRenderer } from "./ipc/renderer/contextifiedIpcRenderer";
+import type { ContextifiedIpcRenderer } from "./services/ipc/renderer/contextifiedIpcRenderer";
 
 const contextifiedIpcRenderer: ContextifiedIpcRenderer = {
     on(channel, listener) {

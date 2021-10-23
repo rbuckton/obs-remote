@@ -6,18 +6,18 @@
 import "source-map-support/register";
 import { app } from "electron";
 import { ServiceCollection } from "service-composition";
-import { IMainAppLifetimeManagerService, MainAppLifetimeManagerService } from "./app/main/appLifetimeManagerService";
-import { IMainDevToolsService, MainDevToolsService } from "./dev/main/devToolsService";
-import { IPreferencesService } from "./preferences/common/preferencesService";
-import { MainPreferencesService } from "./preferences/main/preferencesService";
-import { IMainSessionService, MainSessionService } from "./session/main/sessionService";
-import { IMainWindowManagerService, MainWindowManagerService } from "./windowManager/main/windowManagerService";
-import { IPowerManagementService } from "./powerManagement/common/powerManagement";
-import { MainPowerManagementService } from "./powerManagement/main/powerManagement";
-import { IAppService } from "./app/common/appService";
-import { MainAppService } from "./app/main/appService";
-import { IMainElectronForgeWebpackInjectionService, MainElectronForgeWebpackInjectionService } from "./app/main/electronForgeWebpackInjectionService";
-import { IMainKeyVaultService, MainKeyVaultService } from "./preferences/main/keyVaultService";
+import { IMainDevToolsService, MainDevToolsService } from "./services/dev/main/mainDevToolsService";
+import { IPowerManagementService } from "./services/powerManagement/common/powerManagementService";
+import { MainPowerManagementService } from "./services/powerManagement/main/mainPowerManagementService";
+import { IAppService } from "./services/app/common/appService";
+import { IMainAppLifetimeManagerService, MainAppLifetimeManagerService } from "./services/app/main/mainAppLifetimeManagerService";
+import { MainAppService } from "./services/app/main/mainAppService";
+import { IMainElectronForgeWebpackInjectionService, MainElectronForgeWebpackInjectionService } from "./services/app/main/mainElectronForgeWebpackInjectionService";
+import { IPreferencesService } from "./services/preferences/common/preferencesService";
+import { IMainKeyVaultService, MainKeyVaultService } from "./services/preferences/main/mainKeyVaultService";
+import { MainPreferencesService } from "./services/preferences/main/mainPreferencesService";
+import { IMainWindowManagerService, MainWindowManagerService } from "./services/windowManager/main/mainWindowManagerService";
+import { IMainSessionService, MainSessionService } from "./services/session/main/mainSessionService";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require

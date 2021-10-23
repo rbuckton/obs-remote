@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { IpcClient } from "..";
 import * as renderer from "../../../core/renderer/renderer";
-import { ContextifiedIpcRenderer } from "../contextifiedIpcRenderer";
+import { ContextifiedIpcRenderer } from "../../../services/ipc/renderer/contextifiedIpcRenderer";
 jest.mock("../../../core/renderer/renderer");
 
 describe("Main", () => {

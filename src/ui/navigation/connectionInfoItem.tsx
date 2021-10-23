@@ -4,7 +4,7 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { ListSubheader, Typography } from "@mui/material";
-import { IAppService } from "../../app/common/appService";
+import { IAppService } from "../../services/app/common/appService";
 import { useService } from "../hooks/useService";
 import { useAppContext } from "../utils/appContext";
 

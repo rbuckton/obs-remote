@@ -6,24 +6,24 @@
 import "source-map-support/register";
 import "@fontsource/roboto";
 import { Button, CssBaseline, Divider, List, StyledEngineProvider, SwipeableDrawer, Theme, ThemeProvider } from "@mui/material";
+import { styled } from "@mui/system";
 import * as ReactDOM from "react-dom";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 import { IServiceProvider, ServiceCollection } from "service-composition";
-import { IAppService } from "./app/common/appService";
-import { RendererInfoAppService } from "./app/renderer/appInfoService";
-import { IPowerManagementService } from "./powerManagement/common/powerManagement";
-import { RendererPowerManagementService } from "./powerManagement/renderer/powerManagement";
-import { IPreferencesService } from "./preferences/common/preferencesService";
-import { RendererPreferencesService } from "./preferences/renderer/preferencesService";
+import { IAppService } from "./services/app/common/appService";
+import { RendererAppService } from "./services/app/renderer/rendererAppService";
+import { IPowerManagementService } from "./services/powerManagement/common/powerManagementService";
+import { RendererPowerManagementService } from "./services/powerManagement/renderer/rendererPowerManagementService";
+import { IPreferencesService } from "./services/preferences/common/preferencesService";
+import { RendererPreferencesService } from "./services/preferences/renderer/rendererPreferencesService";
+import { FullscreenMode } from "./ui/components/fullscreenMode";
 import { appGlobalStyles } from "./ui/components/globalStyles";
 import { Connect } from "./ui/connect";
 import { Dashboard } from "./ui/dashboard";
 import { Home } from "./ui/home";
-import { ConnectionStateItem, HomeItem, ConnectionInfoItem } from "./ui/navigation";
+import { ConnectionInfoItem, ConnectionStateItem, HomeItem } from "./ui/navigation";
 import { AppContext, createAppContext, useAppContext } from "./ui/utils/appContext";
 import { CompositionContext, createCompositionContext } from "./ui/utils/compositionContext";
-import { FullscreenMode } from "./ui/components/fullscreenMode";
-import { styled } from "@mui/system";
 
 declare module '@mui/styles/defaultTheme' {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -94,7 +94,7 @@ async function main() {
         const serviceProvider = new ServiceCollection()
             .addClass(IPreferencesService, RendererPreferencesService)
             .addClass(IPowerManagementService, RendererPowerManagementService)
-            .addClass(IAppService, RendererInfoAppService)
+            .addClass(IAppService, RendererAppService)
             .createContainer();
 
         appRoot = <AppWithServices serviceProvider={serviceProvider} />;

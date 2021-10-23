@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  *-----------------------------------------------------------------------------------------*/
 
-import { ContextifiedIpcRenderer } from "../../ipc/renderer/contextifiedIpcRenderer";
+import { ContextifiedIpcRenderer } from "../../services/ipc/renderer/contextifiedIpcRenderer";
 
 declare var ipcRenderer: ContextifiedIpcRenderer;
 

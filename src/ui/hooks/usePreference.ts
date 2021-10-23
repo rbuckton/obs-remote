@@ -4,7 +4,7 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
-import { IPreferencesService, PreferenceKeys } from "../../preferences/common/preferencesService";
+import { IPreferencesService, PreferenceKeys } from "../../services/preferences/common/preferencesService";
 import { useEvent } from "./useEvent";
 import { useEventCallback } from "./useEventCallback";
 import { useService } from "./useService";

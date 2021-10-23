@@ -1,4 +1,10 @@
-import { IObsWebSocket, NullObsWebSocket } from ".";
+/*-----------------------------------------------------------------------------------------
+ * Copyright © 2021 Ron Buckton. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *-----------------------------------------------------------------------------------------*/
+
+import { NullObsWebSocket } from "./nullObsWebSocket";
+import { IObsWebSocket } from "./iObsWebSocket";
 import { BatchRequest, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse } from "../common/protocol";
 import { Deferred } from "@esfx/async-deferred";
 

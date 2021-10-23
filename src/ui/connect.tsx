@@ -21,8 +21,9 @@ import {
 import { styled } from "@mui/system";
 import React, { useCallback, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router-dom";
-import { IAppService } from "../app/common/appService";
-import { NullObsWebSocket, ObsWebSocket } from "../obs/renderer";
+import { IAppService } from "../services/app/common/appService";
+import { ObsWebSocket } from "../obs/renderer/obsWebSocket";
+import { NullObsWebSocket } from "../obs/renderer/nullObsWebSocket";
 import { createDefaultFakeObsWebSocket } from "../obs/renderer/fakeObsWebSocket";
 import { AppBar } from "./components/appBar";
 import { useAsyncCallback } from "./hooks/useAsyncCallback";

@@ -2,7 +2,7 @@ import { Disposable } from "@esfx/disposable";
 import { describe, expect, it, jest } from "@jest/globals";
 import * as renderer from "../../../core/renderer/renderer";
 import { IpcClientEventObserver } from "../client";
-import { ContextifiedIpcRenderer } from "../contextifiedIpcRenderer";
+import { ContextifiedIpcRenderer } from "../../../services/ipc/renderer/contextifiedIpcRenderer";
 jest.mock("../../../core/renderer/renderer");
 
 describe("Main", () => {

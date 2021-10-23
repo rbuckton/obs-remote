@@ -4,7 +4,7 @@
  *-----------------------------------------------------------------------------------------*/
 
 import { delay } from "@esfx/async-delay";
-import { IAppService } from "../../app/common/appService";
+import { IAppService } from "../../services/app/common/appService";
 import { EVENTS, TypedEventEmitter } from "../../core/common/events";
 import { BatchResponse, GetVideoInfoResponse, OBSStats, ObsWebSocketEvents, ObsWebSocketRequestArgs, ObsWebSocketRequests, ObsWebSocketResponse, Scene, SceneItem, Source, SourceType, SourceTypeCapabilities, SpecialSources } from "../common/protocol";
 import { IObsWebSocket } from "./iObsWebSocket";

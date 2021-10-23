@@ -1,4 +1,4 @@
 {
     "typescript.tsdk": "node_modules\\typescript\\lib",
-    "jest.jestCommandLine": "jest --config ./config/jest.config.js src"
+    // "jest.jestCommandLine": "jest --config ./config/jest.config.js src"
 }
