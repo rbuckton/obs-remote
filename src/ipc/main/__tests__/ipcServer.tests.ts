@@ -1,7 +1,7 @@
-import { describe, expect, it, jest } from "@jest/globals";
-import { IpcServer } from "../server";
-import * as main from "../../../core/main/main";
 import { Disposable } from "@esfx/disposable";
+import { describe, expect, it, jest } from "@jest/globals";
+import * as main from "../../../core/main/main";
+import { IpcServer } from "../server";
 jest.mock("../../../core/main/main");
 
 describe("Main", () => {
