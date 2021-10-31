@@ -15,13 +15,13 @@ jobs:
       with:
         node-version: 16
     - name: install dependencies
-      run: npm ci
+      run: yarn install
     - name: configure nightly
-      run: npm run configure-nightly
+      run: yarn run configure-nightly
     - name: run tests
-      run: npm run test
+      run: yarn run test
     - name: make package
-      run: npm run make
+      run: yarn run make
     - name: upload windows build artifacts
       uses: actions/upload-artifact@v2.2.4
       with:
@@ -39,18 +39,18 @@ jobs:
       with:
         node-version: 16
     - name: install dependencies
-      run: npm ci
+      run: yarn install
     - name: configure nightly
-      run: npm run configure-nightly
+      run: yarn run configure-nightly
     - name: run tests
-      run: npm run test
+      run: yarn run test
     - name: make package
-      run: npm run make
+      run: yarn run make
     - name: upload linux build artifacts
       uses: actions/upload-artifact@v2.2.4
       with:
         name: artifacts-linux
-        path: out/make/
+        path: packages/obs-remote/out/make/
         if-no-files-found: error
   macos:
     runs-on: macos-latest
@@ -61,20 +61,18 @@ jobs:
       with:
         node-version: 16
     - name: install dependencies
-      run: npm ci
+      run: yarn install
     - name: configure nightly
-      run: npm run configure-nightly
+      run: yarn run configure-nightly
     - name: run tests
-      run: npm run test
+      run: yarn run test
     - name: make package
-      run: npm run make
-    - name: print directory structure
-      run: ls -R out/make
+      run: yarn run make
     - name: upload macos build artifacts
       uses: actions/upload-artifact@v2.2.4
       with:
         name: artifacts-macos
-        path: out/make/
+        path: packages/obs-remote/out/make/
         if-no-files-found: error
   publish-nightly:
     runs-on: ubuntu-latest

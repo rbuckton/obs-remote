@@ -1,5 +1,5 @@
 {
-  "name": "obs-remote-monorepo",
+  "name": "obs-remote",
   "version": "0.0.0",
   "private": true,
   "description": "Remote control for OBS Studio",
@@ -7,15 +7,16 @@
     "name": "Ron Buckton",
     "email": "rbuckton@chronicles.org"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "license": "MIT",
   "scripts": {
-    "start": "yarn workspace obs-remote run start",
-    "package": "yarn workspace obs-remote run package",
-    "make": "yarn workspace obs-remote run make",
-    "configure-nightly": "node scripts/configure-version.js --tag pre --timestamp-kind date"
+    "test": "jest --config ./config/jest.config.js src",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "main": "./.webpack/main",
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.61",
@@ -82,5 +83,8 @@
     "typescript": "^4.5.0-dev.20211019",
     "webpack": "^5.55.1",
     "webpack-cli": "^4.8.0"
+  },
+  "config": {
+    "forge": "./config/forge.config.js"
   }
 }

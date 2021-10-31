@@ -20,11 +20,6 @@
         "experimentalDecorators": true,
         "noEmitOnError": true
     },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "dist",
-        "node_modules"
-    ]
+    "include": [],
+    "files": []
 }
