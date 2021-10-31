@@ -83,15 +83,63 @@ function parseArgs(argv) {
     }
 }
 
-function main() {
-    const { tag, timestampKind } = parseArgs(process.argv.slice(2));
+function * collectPackages() {
+    const rootDir = path.dirname(__dirname);
+    const file = path.join(rootDir, "package.json");
+    const json = require(file);
+    const version = parseVersion(json);
+    yield { file, version, json, root: true };
 
-    const packageJson = require("../package.json");
+    const packagesDir = path.join(rootDir, "packages");
+    for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        try {
+            const file = path.join(packagesDir, entry.name, "package.json");
+            const json = require(file);
+            const version = parseVersion(json);
+            yield { file, version, json, root: false };
+        }
+        catch {
+        }
+    }
+}
+
+/**
+ * 
+ * @param {any} packageJson 
+ * @returns {[major: number, minor: number, patch: number]}
+ */
+function parseVersion(packageJson) {
     const packageVersion = packageJson.version;
     const versionRegExp = /^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
     const versionMatch = versionRegExp.exec(packageVersion);
     if (!versionMatch?.groups) throw new Error(`Invalid version: ${packageVersion}`);
     const version = versionMatch.groups;
+    return [+version.major, +version.minor, +version.patch];
+}
+
+/**
+ * @param {[major: number, minor: number, patch: number]} left 
+ * @param {[major: number, minor: number, patch: number]} right 
+ */
+function compareVersion(left, right) {
+    return left[0] - right[0]
+        || left[1] - right[1]
+        || left[2] - right[2];
+}
+
+function main() {
+    const { tag, timestampKind } = parseArgs(process.argv.slice(2));
+    const packages = [...collectPackages()];
+
+    let maxVersion;
+    for (const { version } of packages) {
+        if (!maxVersion || compareVersion(maxVersion, version) < 0) {
+            maxVersion = version;
+        }
+    }
+
+    if (!maxVersion) throw new Error(`Could not determine package version`);
     const timestamp = 
         timestampKind === "datetime" ? new Date().toISOString()
             .replace(/\.*$/, "")
@@ -101,10 +149,13 @@ function main() {
             .replace(/-/g, "") :
         "";
     const prerelease = tag ? `-${tag}.${timestamp}` : "";
-    const newVersion = `${version.major}.${version.minor}.${version.patch}${prerelease}`;
-    if (packageVersion !== newVersion) {
-        packageJson.version = newVersion;
-        fs.writeFileSync(require.resolve("../package.json"), JSON.stringify(packageJson, undefined, "  "), "utf-8");
+    const newVersion = `${maxVersion[0]}.${maxVersion[1]}.${maxVersion[2]}${prerelease}`;
+
+    for (const { file, json } of packages) {
+        if (json.version !== newVersion) {
+            json.version = newVersion;
+            fs.writeFileSync(file, JSON.stringify(json, undefined, "  "), "utf-8");
+        }
     }
 }
 
