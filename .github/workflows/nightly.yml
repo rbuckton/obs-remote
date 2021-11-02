@@ -13,12 +13,14 @@ jobs:
       no_changes: ${{ steps.has_changes.outputs.no_changes }}
     steps:
     - uses: actions/checkout@v2
+    - name: print latest_commit
+      run: echo ${{ github.sha }}
     - id: has_changes
       continue-on-error: true
       name: check for recent changes
       # TODO: Disable this once testing is completed.
       # if: ${{ github.event_name == 'schedule' }}
-      run: test -z $(git rev-list --after="24 hours" ${{ github.sha }}) && echo "::set-output name=no_changes::true"
+      run: (test $(git rev-list ${{ github.sha }} --after="24 hours" --count -- ':(exclude).github/' ':(exclude).vscode/') -ne 0) && (echo "::set-output name=no_changes::true")
   windows:
     runs-on: windows-latest
     needs: checks
