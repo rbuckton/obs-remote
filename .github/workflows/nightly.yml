@@ -18,8 +18,7 @@ jobs:
     - id: has_changes
       continue-on-error: true
       name: check for recent changes
-      # TODO: Disable this once testing is completed.
-      # if: ${{ github.event_name == 'schedule' }}
+      if: ${{ github.event_name == 'schedule' }}
       run: (test $(git rev-list ${{ github.sha }} --after="24 hours" --count -- ':(exclude).github/' ':(exclude).vscode/') -ne 0) && (echo "::set-output name=no_changes::true")
   windows:
     runs-on: windows-latest
