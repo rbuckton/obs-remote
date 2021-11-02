@@ -6,8 +6,23 @@ on:
   repository_dispatch:
     types: publish-nightly
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: check for recent changes
+    outputs:
+      no_changes: ${{ steps.has_changes.outputs.no_changes }}
+    steps:
+    - uses: actions/checkout@v2
+    - id: has_changes
+      continue-on-error: true
+      name: check for recent changes
+      # TODO: Disable this once testing is completed.
+      # if: ${{ github.event_name == 'schedule' }}
+      run: test -z $(git rev-list --after="24 hours" ${{ github.sha }}) && echo "::set-output name=no_changes::true"
   windows:
     runs-on: windows-latest
+    needs: checks
+    if: ${{ needs.checks.outputs.no_changes != 'true' }}
     steps:
     - uses: actions/checkout@v2
     - name: use node v16
@@ -32,6 +47,8 @@ jobs:
         if-no-files-found: error
   linux:
     runs-on: ubuntu-latest
+    needs: checks
+    if: ${{ needs.checks.outputs.no_changes != 'true' }}
     steps:
     - uses: actions/checkout@v2
     - name: use node v16
@@ -54,6 +71,8 @@ jobs:
         if-no-files-found: error
   macos:
     runs-on: macos-latest
+    needs: checks
+    if: ${{ needs.checks.outputs.no_changes != 'true' }}
     steps:
     - uses: actions/checkout@v2
     - name: use node v16
@@ -80,6 +99,8 @@ jobs:
       - windows
       - linux
       - macos
+      - checks
+    if: ${{ needs.checks.outputs.no_changes != 'true' }}
     steps:
     - name: download build artifacts
       uses: actions/download-artifact@v2
