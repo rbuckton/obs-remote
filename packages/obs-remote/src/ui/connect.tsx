@@ -19,7 +19,7 @@ import {
     TextField, Typography
 } from "@mui/material";
 import { styled } from "@mui/system";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router-dom";
 import { IAppService } from "../services/app/common/appService";
 import { ObsWebSocket } from "../obs/renderer/obsWebSocket";
@@ -86,8 +86,10 @@ export const Connect = ({
     const [rememberAuthKey, setRememberAuthKey, commitRememberAuthKey] = usePreferenceEditor("rememberAuthKey");
     const [authKey, setAuthKey, commitAuthKey] = usePreferenceEditor("authKey");
     const [autoConnect, setAutoConnect, commitAutoConnect] = usePreferenceEditor("autoConnect");
-    const [state, setState] = useState(() => auto ? ConnectionState.AutoConnectRequested : ConnectionState.Disconnected);
     const [errorMessage, setErrorMessage] = useState(() => error);
+    const [state, setState_] = useState(() => auto ? ConnectionState.AutoConnectRequested : ConnectionState.Disconnected);
+    const stateRef = useRef(state);
+    const setState = (state: ConnectionState) => setState_(stateRef.current = state);
 
     // behavior
     const toggleTheme = useCallback(() => {
@@ -122,10 +124,10 @@ export const Connect = ({
      */
     const doConnect = useAsyncCallback(async token => {
         try {
-            if (state >= ConnectionState.Connecting) return;
+            if (stateRef.current >= ConnectionState.Connecting) return;
             if (!validate()) return;
-            setState(ConnectionState.Connecting);
             setErrorMessage(undefined);
+            setState(ConnectionState.Connecting);
 
             const obs = new ObsWebSocket();
             await obs.connect({ address: `${hostname}:${port}`, password: authKey });
@@ -151,16 +153,16 @@ export const Connect = ({
             setErrorMessage(e instanceof Error ? e.message : `${e}`);
             setState(ConnectionState.Disconnected);
         }
-    }, [state, hostname, port, authKey, validate]);
+    }, [stateRef, hostname, port, authKey, validate]);
 
     /**
      * Connect to a fake OBS instance for demo/test purposes
      */
     const doDemo = useAsyncCallback(async token => {
         try {
-            if (state >= ConnectionState.Connecting) return;
-            setState(ConnectionState.Connecting);
+            if (stateRef.current >= ConnectionState.Connecting) return;
             setErrorMessage(undefined);
+            setState(ConnectionState.Connecting);
 
             const obs = createDefaultFakeObsWebSocket(app);
             await obs.connect({ address: `demo:4444` });
@@ -186,7 +188,7 @@ export const Connect = ({
             setErrorMessage(e instanceof Error ? e.message : `${e}`);
             setState(ConnectionState.Disconnected);
         }
-    }, [state, createDefaultFakeObsWebSocket, app]);
+    }, [stateRef, createDefaultFakeObsWebSocket, app]);
 
     const onDialogClose = useCallback(() => {
         if (history.length > 1) {
@@ -201,10 +203,10 @@ export const Connect = ({
 
     // Start auto-connection if this is the first mount of the component
     useAsyncEffect(async (token) => {
-        if (state === ConnectionState.AutoConnectRequested) {
+        if (stateRef.current === ConnectionState.AutoConnectRequested) {
             await doConnect.cancelable(token);
         }
-    }, [state, doConnect]);
+    }, [doConnect]);
 
     // ui
     return state === ConnectionState.Connected ?
